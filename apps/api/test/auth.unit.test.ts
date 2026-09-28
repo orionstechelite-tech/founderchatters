@@ -1,8 +1,20 @@
-import type { ExecutionContext } from '@nestjs/common';
+import { Logger, type ExecutionContext } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 
+import { AccountRecoveryService } from '../src/auth/account-recovery.service.js';
 import { AuthRateLimiter } from '../src/auth/auth-rate-limiter.js';
 import { AuthService } from '../src/auth/auth.service.js';
+import {
+  AUTH_TOKEN_BYTES,
+  AUTH_TOKEN_TTL_MS,
+  AuthTokenService,
+} from '../src/auth/auth-token.service.js';
+import {
+  AuthEmailDeliveryError,
+  AuthEmailFailureReporter,
+  AuthEmailService,
+  type EmailDelivery,
+} from '../src/auth/email-delivery.service.js';
 import {
   ARGON2ID_OPTIONS,
   PasswordHasher,
@@ -24,6 +36,10 @@ const config = (production = false) =>
     passwordPepper: 'test-password-pepper',
     allowedOrigins: new Set(['http://localhost:3000']),
   }) as AppConfig;
+const signupEmailContext = {
+  flow: 'signup-verification',
+  requestId: 'request-test',
+} as const;
 
 const CONFIG_ENVIRONMENT_KEYS = [
   'NODE_ENV',
@@ -32,6 +48,9 @@ const CONFIG_ENVIRONMENT_KEYS = [
   'ALLOWED_ORIGINS',
   'SESSION_SECRET',
   'PASSWORD_PEPPER',
+  'AUTH_TOKEN_SECRET',
+  'WEB_URL',
+  'EMAIL_PROVIDER',
   'TRUST_PROXY_ADDRESSES',
 ] as const;
 
@@ -67,6 +86,11 @@ const requiredEnvironment = {
   DATABASE_URL: 'postgresql://local/test',
   REDIS_URL: 'redis://localhost:6379',
   ALLOWED_ORIGINS: 'http://localhost:3000',
+  WEB_URL: 'http://localhost:3000',
+} as const;
+const productionEnvironment = {
+  ...requiredEnvironment,
+  WEB_URL: 'https://app.founderchatters.com',
 } as const;
 
 describe('AppConfig security environment', () => {
@@ -86,28 +110,20 @@ describe('AppConfig security environment', () => {
     );
   });
 
-  it('requires production secrets and enables Secure cookies', () => {
-    withEnvironment(
+  it('requires production secrets and keeps Secure cookie policy', () => {
+    const sessions = new SessionService(
+      {} as PrismaService,
       {
-        ...requiredEnvironment,
-        NODE_ENV: 'production',
-        SESSION_SECRET: 's'.repeat(32),
-        PASSWORD_PEPPER: 'p'.repeat(32),
-        TRUST_PROXY_ADDRESSES: 'none',
-      },
-      () => {
-        const runtimeConfig = new AppConfig();
-        const sessions = new SessionService({} as PrismaService, runtimeConfig);
-
-        expect(runtimeConfig.trustedProxyAddresses).toBe(false);
-        expect(sessions.cookieOptions(new Date()).secure).toBe(true);
-      },
+        isProduction: true,
+      } as AppConfig,
     );
+    expect(sessions.cookieOptions(new Date()).secure).toBe(true);
 
     withEnvironment(
       {
-        ...requiredEnvironment,
+        ...productionEnvironment,
         NODE_ENV: 'production',
+        AUTH_TOKEN_SECRET: 't'.repeat(32),
         PASSWORD_PEPPER: 'p'.repeat(32),
         TRUST_PROXY_ADDRESSES: 'none',
       },
@@ -117,13 +133,130 @@ describe('AppConfig security environment', () => {
     );
     withEnvironment(
       {
-        ...requiredEnvironment,
+        ...productionEnvironment,
         NODE_ENV: 'production',
+        AUTH_TOKEN_SECRET: 't'.repeat(32),
         SESSION_SECRET: 's'.repeat(32),
         TRUST_PROXY_ADDRESSES: 'none',
       },
       () => {
         expect(() => new AppConfig()).toThrow(/PASSWORD_PEPPER is required/);
+      },
+    );
+    withEnvironment(
+      {
+        ...productionEnvironment,
+        NODE_ENV: 'production',
+        SESSION_SECRET: 's'.repeat(32),
+        PASSWORD_PEPPER: 'p'.repeat(32),
+        TRUST_PROXY_ADDRESSES: 'none',
+      },
+      () => {
+        expect(() => new AppConfig()).toThrow(/AUTH_TOKEN_SECRET is required/);
+      },
+    );
+  });
+
+  it.each(['development', 'test'] as const)(
+    'allows the deterministic memory provider in %s',
+    (environment) => {
+      withEnvironment(
+        {
+          ...requiredEnvironment,
+          NODE_ENV: environment,
+          EMAIL_PROVIDER: 'memory',
+        },
+        () => {
+          expect(new AppConfig().emailProvider).toBe('memory');
+        },
+      );
+    },
+  );
+
+  it.each([
+    ['staging', undefined],
+    ['staging', 'memory'],
+    ['production', undefined],
+    ['production', 'memory'],
+  ] as const)(
+    'rejects an unapproved provider in %s when EMAIL_PROVIDER=%s',
+    (environment, provider) => {
+      withEnvironment(
+        {
+          ...productionEnvironment,
+          NODE_ENV: environment,
+          SESSION_SECRET: 's'.repeat(32),
+          PASSWORD_PEPPER: 'p'.repeat(32),
+          AUTH_TOKEN_SECRET: 't'.repeat(32),
+          TRUST_PROXY_ADDRESSES: 'none',
+          ...(provider ? { EMAIL_PROVIDER: provider } : {}),
+        },
+        () => {
+          expect(() => new AppConfig()).toThrow(
+            /approved production-capable EMAIL_PROVIDER is required/,
+          );
+        },
+      );
+    },
+  );
+
+  it('accepts a valid production HTTPS WEB_URL before provider validation', () => {
+    withEnvironment(
+      {
+        ...productionEnvironment,
+        NODE_ENV: 'production',
+        SESSION_SECRET: 's'.repeat(32),
+        PASSWORD_PEPPER: 'p'.repeat(32),
+        AUTH_TOKEN_SECRET: 't'.repeat(32),
+        TRUST_PROXY_ADDRESSES: 'none',
+      },
+      () => {
+        expect(() => new AppConfig()).toThrow(
+          /approved production-capable EMAIL_PROVIDER is required/,
+        );
+      },
+    );
+  });
+
+  it('rejects production HTTP and accepts localhost HTTP in development', () => {
+    withEnvironment(
+      {
+        ...productionEnvironment,
+        NODE_ENV: 'production',
+        WEB_URL: 'http://app.founderchatters.com',
+      },
+      () => {
+        expect(() => new AppConfig()).toThrow(
+          /WEB_URL must use HTTPS in staging and production/,
+        );
+      },
+    );
+    withEnvironment(
+      {
+        ...requiredEnvironment,
+        NODE_ENV: 'development',
+      },
+      () => {
+        expect(new AppConfig().webUrl).toBe('http://localhost:3000');
+      },
+    );
+  });
+
+  it.each([
+    ['not a URL', /valid absolute URL origin/],
+    ['https://user:secret@app.example.com', /origin only/],
+    ['https://app.example.com/path', /origin only/],
+    ['https://app.example.com?next=x', /origin only/],
+    ['https://app.example.com#fragment', /origin only/],
+  ] as const)('rejects unsafe WEB_URL %s', (webUrl, expected) => {
+    withEnvironment(
+      {
+        ...requiredEnvironment,
+        NODE_ENV: 'development',
+        WEB_URL: webUrl,
+      },
+      () => {
+        expect(() => new AppConfig()).toThrow(expected);
       },
     );
   });
@@ -147,10 +280,11 @@ describe('AppConfig security environment', () => {
     (trustedProxy) => {
       withEnvironment(
         {
-          ...requiredEnvironment,
+          ...productionEnvironment,
           NODE_ENV: 'production',
           SESSION_SECRET: 's'.repeat(32),
           PASSWORD_PEPPER: 'p'.repeat(32),
+          AUTH_TOKEN_SECRET: 't'.repeat(32),
           TRUST_PROXY_ADDRESSES: trustedProxy,
         },
         () => {
@@ -165,10 +299,11 @@ describe('AppConfig security environment', () => {
   it('requires an explicit production proxy decision', () => {
     withEnvironment(
       {
-        ...requiredEnvironment,
+        ...productionEnvironment,
         NODE_ENV: 'production',
         SESSION_SECRET: 's'.repeat(32),
         PASSWORD_PEPPER: 'p'.repeat(32),
+        AUTH_TOKEN_SECRET: 't'.repeat(32),
       },
       () => {
         expect(() => new AppConfig()).toThrow(
@@ -204,6 +339,152 @@ describe('PasswordHasher', () => {
   }, 20_000);
 });
 
+describe('AuthTokenService', () => {
+  it('issues random purpose-separated token digests with a fixed expiry', () => {
+    const tokens = new AuthTokenService({
+      authTokenSecret: 'test-auth-token-secret',
+    } as AppConfig);
+    const now = new Date('2030-01-01T00:00:00.000Z');
+    const first = tokens.issue('email-verification', now);
+    const second = tokens.issue('email-verification', now);
+
+    expect(Buffer.from(first.rawToken, 'base64url')).toHaveLength(
+      AUTH_TOKEN_BYTES,
+    );
+    expect(first.rawToken).not.toBe(second.rawToken);
+    expect(first.tokenHash).not.toContain(first.rawToken);
+    expect(first.expiresAt.getTime() - now.getTime()).toBe(AUTH_TOKEN_TTL_MS);
+    expect(tokens.hash('email-verification', first.rawToken)).toBe(
+      first.tokenHash,
+    );
+    expect(tokens.hash('password-reset', first.rawToken)).not.toBe(
+      first.tokenHash,
+    );
+  });
+});
+
+describe('AuthEmailService', () => {
+  it('surfaces delivery failure while logging only sanitized flow context', async () => {
+    const log = vi
+      .spyOn(Logger.prototype, 'error')
+      .mockImplementation(() => {});
+    const token = 'raw-secret-token';
+    const providerSecret = 'provider-secret-value';
+    const delivery = {
+      send: vi.fn().mockRejectedValue(new Error(`${providerSecret}:${token}`)),
+    } as EmailDelivery;
+    const email = new AuthEmailService(
+      {
+        webUrl: 'http://localhost:3000',
+      } as AppConfig,
+      delivery,
+      new AuthEmailFailureReporter(),
+    );
+
+    await expect(
+      email.sendVerification('founder@example.com', token, {
+        flow: 'resend-verification',
+        requestId: 'request-123',
+      }),
+    ).rejects.toBeInstanceOf(AuthEmailDeliveryError);
+
+    const logged = JSON.stringify(log.mock.calls);
+    expect(logged).toContain('auth_email_failure');
+    expect(logged).toContain('request-123');
+    expect(logged).not.toContain(token);
+    expect(logged).not.toContain(providerSecret);
+    expect(logged).not.toContain('founder@example.com');
+    log.mockRestore();
+  });
+});
+
+describe('AccountRecoveryService issuance retries', () => {
+  const context = {
+    flow: 'forgot-password',
+    requestId: 'request-retry',
+  } as const;
+
+  function recoveryWithTransaction(transaction: ReturnType<typeof vi.fn>) {
+    const failures = { report: vi.fn() };
+    const prisma = {
+      user: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: 'user-1',
+          email: 'founder@example.com',
+          status: 'ACTIVE',
+          deletedAt: null,
+        }),
+      },
+      passwordResetToken: {
+        create: vi.fn().mockResolvedValue({ id: 'candidate-1' }),
+        deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      $transaction: transaction,
+    };
+    const service = new AccountRecoveryService(
+      prisma as unknown as PrismaService,
+      {
+        issue: vi.fn().mockReturnValue({
+          rawToken: 'raw-reset-token',
+          tokenHash: 'reset-token-hash',
+          expiresAt: new Date('2030-01-01'),
+        }),
+      } as never,
+      { sendPasswordReset: vi.fn().mockResolvedValue(undefined) } as never,
+      failures as never,
+      {} as PasswordHasher,
+    );
+    return { failures, prisma, service };
+  }
+
+  it('retries only recognized transaction conflicts within the bound', async () => {
+    const tx = {
+      passwordResetToken: {
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+    };
+    const transaction = vi
+      .fn()
+      .mockRejectedValueOnce({ code: 'P2034' })
+      .mockRejectedValueOnce({ code: 'P2034' })
+      .mockImplementation((operation: (client: typeof tx) => unknown) =>
+        operation(tx),
+      );
+    const { failures, service } = recoveryWithTransaction(transaction);
+
+    await expect(
+      service.requestPasswordReset('founder@example.com', context),
+    ).resolves.toEqual({ accepted: true });
+    expect(transaction).toHaveBeenCalledTimes(3);
+    expect(failures.report).not.toHaveBeenCalled();
+  });
+
+  it('does not retry arbitrary errors and keeps the public response generic', async () => {
+    const transaction = vi
+      .fn()
+      .mockRejectedValue(new Error('application failure'));
+    const { failures, prisma, service } = recoveryWithTransaction(transaction);
+
+    await expect(
+      service.requestPasswordReset('founder@example.com', context),
+    ).resolves.toEqual({ accepted: true });
+    expect(transaction).toHaveBeenCalledOnce();
+    expect(prisma.passwordResetToken.deleteMany).toHaveBeenCalled();
+    expect(failures.report).toHaveBeenCalledWith(context, 'token-finalization');
+  });
+
+  it('stops after bounded conflict retries and preserves the generic response', async () => {
+    const transaction = vi.fn().mockRejectedValue({ code: 'P2034' });
+    const { failures, service } = recoveryWithTransaction(transaction);
+
+    await expect(
+      service.requestPasswordReset('founder@example.com', context),
+    ).resolves.toEqual({ accepted: true });
+    expect(transaction).toHaveBeenCalledTimes(3);
+    expect(failures.report).toHaveBeenCalledWith(context, 'token-finalization');
+  });
+});
+
 describe('AuthService', () => {
   it('normalizes signup email, persists only a hash, and returns safe fields', async () => {
     const userCreate = vi.fn().mockImplementation(({ data }) => ({
@@ -218,7 +499,11 @@ describe('AuthService', () => {
       rawToken: 'raw-token',
       expiresAt: new Date('2030-01-01'),
     });
-    const transaction = { user: { create: userCreate } };
+    const verificationCreate = vi.fn().mockResolvedValue({});
+    const transaction = {
+      user: { create: userCreate },
+      emailVerificationToken: { create: verificationCreate },
+    };
     const service = new AuthService(
       {
         $transaction: vi
@@ -230,11 +515,20 @@ describe('AuthService', () => {
       } as unknown as PrismaService,
       { hash } as unknown as PasswordHasher,
       { create: createSession } as unknown as SessionService,
+      {
+        issue: vi.fn().mockReturnValue({
+          rawToken: 'raw-verification-token',
+          tokenHash: 'verification-token-hash',
+          expiresAt: new Date('2030-01-01'),
+        }),
+      } as never,
+      { sendVerification: vi.fn().mockResolvedValue(undefined) } as never,
     );
 
     const result = await service.signup(
       { email: '  Founder@Example.COM ', password: 'long-enough-password' },
       { ipAddress: '127.0.0.1', userAgent: 'test' },
+      signupEmailContext,
     );
 
     expect(hash).toHaveBeenCalledWith('long-enough-password');
@@ -242,6 +536,13 @@ describe('AuthService', () => {
       data: {
         email: 'founder@example.com',
         passwordHash: '$argon2id$hash',
+      },
+    });
+    expect(verificationCreate).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-1',
+        tokenHash: 'verification-token-hash',
+        expiresAt: new Date('2030-01-01'),
       },
     });
     expect(JSON.stringify(result.response)).not.toMatch(
@@ -255,12 +556,15 @@ describe('AuthService', () => {
       {} as PrismaService,
       {} as PasswordHasher,
       {} as SessionService,
+      {} as never,
+      {} as never,
     );
 
     await expect(
       service.signup(
         { email: 'bad', password: 'short' },
         { ipAddress: undefined, userAgent: undefined },
+        signupEmailContext,
       ),
     ).rejects.toMatchObject({
       code: 'AUTH_INVALID_CREDENTIALS',
@@ -280,12 +584,21 @@ describe('AuthService', () => {
         hash: vi.fn().mockResolvedValue('$argon2id$hash'),
       } as unknown as PasswordHasher,
       {} as SessionService,
+      {
+        issue: vi.fn().mockReturnValue({
+          rawToken: 'raw-verification-token',
+          tokenHash: 'verification-token-hash',
+          expiresAt: new Date('2030-01-01'),
+        }),
+      } as never,
+      {} as never,
     );
 
     await expect(
       service.signup(
         { email: 'founder@example.com', password: 'long-enough-password' },
         { ipAddress: undefined, userAgent: undefined },
+        signupEmailContext,
       ),
     ).rejects.toMatchObject({
       code: 'AUTH_INVALID_CREDENTIALS',
@@ -306,6 +619,8 @@ describe('AuthService', () => {
       } as unknown as PrismaService,
       password,
       sessions,
+      {} as never,
+      {} as never,
     );
     const existing = new AuthService(
       {
@@ -320,6 +635,8 @@ describe('AuthService', () => {
       } as unknown as PrismaService,
       password,
       sessions,
+      {} as never,
+      {} as never,
     );
     const input = {
       email: 'founder@example.com',
@@ -485,6 +802,59 @@ describe('AuthRateLimiter', () => {
         status: 429,
       });
     }
+  });
+
+  it('throttles one normalized recipient across rotating client identities', async () => {
+    const counts = new Map<string, number>();
+    const increment = vi.fn().mockImplementation((key: string) => {
+      const count = (counts.get(key) ?? 0) + 1;
+      counts.set(key, count);
+      return count;
+    });
+    const sessions = new SessionService({} as PrismaService, config());
+    const limiter = new AuthRateLimiter(
+      { incrementFixedWindow: increment } as unknown as RedisService,
+      sessions,
+    );
+    const email = 'victim@example.com';
+
+    for (const address of ['198.51.100.1', '198.51.100.2', '198.51.100.3']) {
+      await limiter.check('forgotPassword', address);
+      await limiter.checkRecipient('forgotPassword', email);
+    }
+    await limiter.check('forgotPassword', '198.51.100.4');
+    await expect(
+      limiter.checkRecipient('forgotPassword', email),
+    ).rejects.toMatchObject({
+      code: 'AUTH_RATE_LIMITED',
+      status: 429,
+    });
+
+    const keys = [...counts.keys()];
+    expect(keys.join(' ')).not.toContain(email);
+    expect(keys.filter((key) => key.includes(':recipient:'))).toHaveLength(1);
+  });
+
+  it('separates recipient and purpose buckets without plaintext email keys', async () => {
+    const keys: string[] = [];
+    const limiter = new AuthRateLimiter(
+      {
+        incrementFixedWindow: vi.fn().mockImplementation((key: string) => {
+          keys.push(key);
+          return 1;
+        }),
+      } as unknown as RedisService,
+      new SessionService({} as PrismaService, config()),
+    );
+
+    await limiter.checkRecipient('resendVerification', 'one@example.com');
+    await limiter.checkRecipient('resendVerification', 'two@example.com');
+    await limiter.checkRecipient('forgotPassword', 'one@example.com');
+
+    expect(new Set(keys).size).toBe(3);
+    expect(keys.join(' ')).not.toMatch(/one@example|two@example/);
+    expect(keys[0]).toContain(':recipient:resendVerification:');
+    expect(keys[2]).toContain(':recipient:forgotPassword:');
   });
 });
 
