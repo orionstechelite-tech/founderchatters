@@ -147,6 +147,10 @@ export class SessionService {
     return this.digest('rate-limit-ip', ipAddress);
   }
 
+  hashRateLimitRecipient(purpose: string, normalizedEmail: string): string {
+    return this.digest(`rate-limit-recipient:${purpose}`, normalizedEmail);
+  }
+
   private digest(purpose: string, value: string): string {
     return createHmac('sha256', this.config.sessionSecret)
       .update(`${purpose}\0${value}`, 'utf8')

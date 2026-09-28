@@ -82,7 +82,7 @@
       "id": "FC-006",
       "title": "Email verification and reset",
       "phase": "identity",
-      "status": "pending",
+      "status": "completed",
       "authorization": "AUTO_LOCAL",
       "depends_on": [
         "FC-005"

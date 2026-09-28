@@ -100,11 +100,53 @@ function secret(
   return value;
 }
 
+function applicationOrigin(
+  value: string,
+  runtimeEnvironment: RuntimeEnvironment,
+): string {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('WEB_URL must be a valid absolute URL origin');
+  }
+  if (
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash ||
+    (url.pathname !== '' && url.pathname !== '/')
+  ) {
+    throw new Error(
+      'WEB_URL must be an origin only, without credentials, path, query, or fragment',
+    );
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error('WEB_URL must use HTTP or HTTPS');
+  }
+  if (
+    (runtimeEnvironment === 'staging' || runtimeEnvironment === 'production') &&
+    url.protocol !== 'https:'
+  ) {
+    throw new Error('WEB_URL must use HTTPS in staging and production');
+  }
+  return url.origin;
+}
+
 @Injectable()
 export class AppConfig {
   readonly environment = environment();
   readonly databaseUrl = required('DATABASE_URL');
   readonly redisUrl = required('REDIS_URL');
+  readonly webUrl = applicationOrigin(
+    required(
+      'WEB_URL',
+      this.environment === 'production' || this.environment === 'staging'
+        ? undefined
+        : 'http://localhost:3000',
+    ),
+    this.environment,
+  );
   readonly sessionCookieName =
     process.env.SESSION_COOKIE_NAME?.trim() || 'fc_session';
   readonly sessionSecret = secret(
@@ -116,6 +158,11 @@ export class AppConfig {
     'PASSWORD_PEPPER',
     this.environment,
     'local-password-pepper',
+  );
+  readonly authTokenSecret = secret(
+    'AUTH_TOKEN_SECRET',
+    this.environment,
+    'local-auth-token-secret',
   );
   readonly allowedOrigins = new Set(
     required(
@@ -130,8 +177,28 @@ export class AppConfig {
     process.env.TRUST_PROXY_ADDRESSES,
     this.environment,
   );
+  readonly emailProvider = this.resolveEmailProvider();
 
   get isProduction(): boolean {
     return this.environment === 'production';
+  }
+
+  private resolveEmailProvider(): 'memory' {
+    const value =
+      process.env.EMAIL_PROVIDER?.trim().toLowerCase() ||
+      (this.environment === 'development' || this.environment === 'test'
+        ? 'memory'
+        : 'unconfigured');
+    if (this.environment === 'staging' || this.environment === 'production') {
+      throw new Error(
+        'An approved production-capable EMAIL_PROVIDER is required in staging and production',
+      );
+    }
+    if (value === 'memory' || value === 'console') {
+      return 'memory';
+    }
+    throw new Error(
+      'EMAIL_PROVIDER must be "memory" in development and test until a production adapter is approved',
+    );
   }
 }

@@ -8,6 +8,11 @@ import {
 
 import { PrismaService } from '../database/prisma.service.js';
 import { ApiError } from '../http/api-error.js';
+import { AuthTokenService } from './auth-token.service.js';
+import {
+  AuthEmailService,
+  type AuthEmailContext,
+} from './email-delivery.service.js';
 import { PasswordHasher } from './password-hasher.js';
 import {
   SessionService,
@@ -35,11 +40,20 @@ export class AuthService {
     private readonly passwords: PasswordHasher,
     @Inject(SessionService)
     private readonly sessions: SessionService,
+    @Inject(AuthTokenService)
+    private readonly authTokens: AuthTokenService,
+    @Inject(AuthEmailService)
+    private readonly email: AuthEmailService,
   ) {}
 
-  async signup(body: unknown, metadata: SessionMetadata): Promise<AuthResult> {
+  async signup(
+    body: unknown,
+    metadata: SessionMetadata,
+    emailContext: AuthEmailContext,
+  ): Promise<AuthResult> {
     const input = this.validateCredentials(body);
     const passwordHash = await this.passwords.hash(input.password);
+    const verification = this.authTokens.issue('email-verification');
 
     try {
       const { user, session } = await this.prisma.$transaction(
@@ -54,6 +68,18 @@ export class AuthService {
             user.id,
             metadata,
             transaction,
+          );
+          await transaction.emailVerificationToken.create({
+            data: {
+              userId: user.id,
+              tokenHash: verification.tokenHash,
+              expiresAt: verification.expiresAt,
+            },
+          });
+          await this.email.sendVerification(
+            user.email,
+            verification.rawToken,
+            emailContext,
           );
           return { user, session };
         },
