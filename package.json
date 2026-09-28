@@ -14,6 +14,12 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
+    "db:format": "prisma format",
+    "db:generate": "prisma generate",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:status": "prisma migrate status",
+    "db:validate": "prisma validate",
+    "db:verify": "node scripts/verify-database-baseline.mjs",
     "dev:api": "npm run dev --workspace @founderchatters/api",
     "dev:web": "npm run dev --workspace @founderchatters/web",
     "format": "prettier --write .",
@@ -30,11 +36,13 @@
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",
+    "dotenv": "18.0.4",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.6",
     "globals": "17.12.0",
     "next": "16.3.6",
     "prettier": "3.9.9",
+    "prisma": "7.10.0",
     "typescript": "6.0.3",
     "typescript-eslint": "8.70.1",
     "vitest": "5.0.2"
