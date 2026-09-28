@@ -10,10 +10,16 @@ import { AppController } from './app.controller.js';
 import { ApplicationModule } from './application/application.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ApiExceptionFilter } from './http/api-exception.filter.js';
+import { OnboardingModule } from './onboarding/onboarding.module.js';
 import { RequestIdMiddleware } from './http/request-id.middleware.js';
 
 @Module({
-  imports: [AuthModule, ApplicationModule, AdminApplicationModule],
+  imports: [
+    AuthModule,
+    ApplicationModule,
+    AdminApplicationModule,
+    OnboardingModule,
+  ],
   controllers: [AppController],
   providers: [
     {

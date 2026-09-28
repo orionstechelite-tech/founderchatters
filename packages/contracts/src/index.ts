@@ -240,3 +240,139 @@ export type AdminApplicationDetailResponse = {
 export type AdminApplicationDecisionRequest = {
   note?: string;
 };
+
+export const ONBOARDING_ERROR_CODES = {
+  incomplete: 'ONBOARDING_INCOMPLETE',
+} as const;
+
+export type OnboardingErrorCode =
+  (typeof ONBOARDING_ERROR_CODES)[keyof typeof ONBOARDING_ERROR_CODES];
+
+export type OnboardingTopic = {
+  slug: string;
+  label: string;
+};
+
+export const ONBOARDING_EXPERTISE_TOPICS = [
+  { slug: 'b2b-sales', label: 'B2B sales' },
+  { slug: 'marketplace-gtm', label: 'Marketplace GTM' },
+  { slug: 'product', label: 'Product' },
+  { slug: 'engineering-hiring', label: 'Engineering hiring' },
+  { slug: 'fundraising', label: 'Fundraising' },
+  { slug: 'operations', label: 'Operations' },
+  { slug: 'india-market', label: 'India market' },
+  { slug: 'travel-mobility', label: 'Travel / mobility' },
+  { slug: 'growth-marketing', label: 'Growth marketing' },
+  { slug: 'partnerships', label: 'Partnerships' },
+  { slug: 'pricing', label: 'Pricing' },
+  { slug: 'founder-operations', label: 'Founder operations' },
+] as const satisfies readonly OnboardingTopic[];
+
+export const ONBOARDING_NEED_TOPICS = [
+  { slug: 'gtm', label: 'GTM' },
+  { slug: 'fundraising', label: 'Fundraising' },
+  { slug: 'hiring', label: 'Hiring' },
+  { slug: 'pricing', label: 'Pricing' },
+  { slug: 'product', label: 'Product' },
+  { slug: 'tech', label: 'Tech' },
+  { slug: 'introductions', label: 'Introductions' },
+  { slug: 'market-entry', label: 'Market entry' },
+] as const satisfies readonly OnboardingTopic[];
+
+const TAXONOMY_BY_SLUG = new Map<string, OnboardingTopic>();
+for (const topic of [
+  ...ONBOARDING_EXPERTISE_TOPICS,
+  ...ONBOARDING_NEED_TOPICS,
+]) {
+  if (!TAXONOMY_BY_SLUG.has(topic.slug)) {
+    TAXONOMY_BY_SLUG.set(topic.slug, topic);
+  }
+}
+
+export const ONBOARDING_TAXONOMY_TOPICS = [
+  ...TAXONOMY_BY_SLUG.values(),
+] as const;
+
+export const ONBOARDING_LIMITS = {
+  displayName: 100,
+  companyName: 120,
+  industry: 120,
+  stage: 80,
+  description: 280,
+  website: 2048,
+  city: 100,
+  country: 100,
+  customExpertise: 120,
+  currentNeedTextMin: 20,
+  currentNeedTextMax: 500,
+  expertiseMin: 1,
+  expertiseMax: 5,
+  needsMax: 3,
+} as const;
+
+export type OnboardingTopicRef = {
+  id: string;
+  slug: string;
+  label: string;
+};
+
+export type OnboardingCompany = {
+  name: string;
+  website: string | null;
+  description: string | null;
+  stage: string | null;
+  industry: string | null;
+  city: string | null;
+  country: string | null;
+};
+
+export type OnboardingProfile = {
+  displayName: string | null;
+  city: string | null;
+  country: string | null;
+  customExpertise: string | null;
+  currentNeedText: string | null;
+  onboardingCompleted: boolean;
+};
+
+export type OnboardingProfileResponse = {
+  profile: OnboardingProfile;
+  company: OnboardingCompany | null;
+  applicationRoleTitle: string | null;
+  expertise: OnboardingTopicRef[];
+  needs: OnboardingTopicRef[];
+  topics: {
+    expertise: OnboardingTopicRef[];
+    needs: OnboardingTopicRef[];
+  };
+};
+
+export type UpdateOnboardingProfileRequest = {
+  displayName?: string;
+  city?: string | null;
+  country?: string | null;
+  company?: {
+    name?: string;
+    website?: string | null;
+    description?: string | null;
+    stage?: string | null;
+    industry?: string | null;
+    city?: string | null;
+    country?: string | null;
+  };
+};
+
+export type UpdateOnboardingExpertiseRequest = {
+  topicIds: string[];
+  customExpertise?: string | null;
+};
+
+export type UpdateOnboardingNeedsRequest = {
+  topicIds: string[];
+  currentNeedText: string;
+};
+
+export type OnboardingCompleteResponse = {
+  completed: true;
+  onboardingCompletedAt: string;
+};
