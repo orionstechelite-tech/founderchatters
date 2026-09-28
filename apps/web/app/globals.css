@@ -1,4 +1,10 @@
 @import 'tailwindcss';
+@import '@founderchatters/ui/styles.css';
+@import '@fontsource/dm-sans/400.css';
+@import '@fontsource/dm-sans/500.css';
+@import '@fontsource/dm-sans/600.css';
+@import '@fontsource/dm-sans/700.css';
+@import '@fontsource/instrument-serif/400.css';
 
 html {
   min-width: 320px;
@@ -6,4 +12,13 @@ html {
 
 body {
   margin: 0;
+  background: var(--fc-color-page);
+  color: var(--fc-color-text);
+  font-family: var(--fc-font-sans);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
