@@ -6,6 +6,7 @@ node_modules/
 dist/
 coverage/
 *.tsbuildinfo
+/generated/prisma/
 
 # Environment overrides and secrets
 .env
