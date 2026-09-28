@@ -45,6 +45,6 @@ import { SessionService } from './session.service.js';
     },
     OriginGuard,
   ],
-  exports: [SessionService],
+  exports: [AppConfig, PrismaService, SessionService],
 })
 export class AuthModule {}

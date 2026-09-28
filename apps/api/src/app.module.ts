@@ -6,12 +6,13 @@ import {
 import { APP_FILTER } from '@nestjs/core';
 
 import { AppController } from './app.controller.js';
+import { ApplicationModule } from './application/application.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ApiExceptionFilter } from './http/api-exception.filter.js';
 import { RequestIdMiddleware } from './http/request-id.middleware.js';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, ApplicationModule],
   controllers: [AppController],
   providers: [
     {
