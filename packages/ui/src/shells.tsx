@@ -112,18 +112,26 @@ const adminItems = [
   'Moderation',
   'Taxonomy',
   'Operations',
-];
-export function AdminShell({ children }: ShellProps) {
+] as const;
+
+export function AdminShell({
+  activeItem = 'Command center',
+  children,
+}: ShellProps & { activeItem?: (typeof adminItems)[number] }) {
   return (
     <div className="fc-admin-shell">
       <aside className="fc-admin-sidebar">
         <div className="fc-wordmark fc-wordmark--inverse">FounderChatters</div>
         <div className="fc-admin-sidebar__eyebrow">Admin operations</div>
         <nav aria-label="Admin navigation">
-          {adminItems.map((item, index) => (
+          {adminItems.map((item) => (
             <a
-              aria-current={index === 0 ? 'page' : undefined}
-              href={`#${item.toLowerCase().replace(' ', '-')}`}
+              aria-current={item === activeItem ? 'page' : undefined}
+              href={
+                item === 'Applications'
+                  ? '/admin/applications'
+                  : `#${item.toLowerCase().replace(' ', '-')}`
+              }
               key={item}
             >
               {item}

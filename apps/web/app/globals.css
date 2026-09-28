@@ -925,3 +925,216 @@ body {
     display: none;
   }
 }
+
+.fc-admin-applications__header h1,
+.fc-admin-applications-state h1 {
+  font: 600 32px/1.15 var(--fc-font-sans);
+  margin: 0 0 8px;
+}
+
+.fc-admin-applications__header p,
+.fc-admin-applications-state > div {
+  color: var(--fc-color-text-secondary);
+  margin: 0;
+}
+
+.fc-admin-applications__filters {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 28px 0 20px;
+}
+
+.fc-admin-applications__filters [role='tablist'] {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fc-admin-applications__tab {
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: var(--fc-radius-full);
+  color: var(--fc-color-text);
+  cursor: pointer;
+  font: 600 14px var(--fc-font-sans);
+  min-height: 44px;
+  padding: 8px 16px;
+}
+
+.fc-admin-applications__tab[aria-selected='true'] {
+  background: var(--fc-color-inverse);
+  border-color: var(--fc-color-inverse);
+  color: var(--fc-color-text-inverse);
+}
+
+.fc-admin-applications__tab:focus-visible,
+.fc-admin-applications__country select:focus-visible,
+.fc-admin-applications__table a:focus-visible {
+  outline: 3px solid var(--fc-color-blue);
+  outline-offset: 2px;
+}
+
+.fc-admin-applications__country {
+  display: grid;
+  font: 600 13px var(--fc-font-sans);
+  gap: 4px;
+  margin-left: auto;
+}
+
+.fc-admin-applications__country select {
+  font: 400 14px var(--fc-font-sans);
+  min-height: 44px;
+  min-width: 180px;
+}
+
+.fc-admin-applications__status,
+.fc-admin-applications__alert {
+  margin: 24px 0;
+}
+
+.fc-admin-applications__table-wrap {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.fc-admin-applications__table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.fc-admin-applications__table th,
+.fc-admin-applications__table td {
+  border-bottom: 1px solid var(--fc-color-border);
+  padding: 14px 12px 14px 0;
+  text-align: left;
+  vertical-align: top;
+}
+
+.fc-admin-applications__table th {
+  color: var(--fc-color-text-secondary);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fc-admin-applications__applicant {
+  display: block;
+  font-weight: 600;
+}
+
+.fc-admin-applications__badge {
+  background: var(--fc-color-page);
+  border: 1px solid var(--fc-color-border);
+  border-radius: var(--fc-radius-full);
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+}
+
+.fc-admin-applications__table a,
+.fc-admin-application-detail a {
+  color: var(--fc-color-text);
+  font-weight: 600;
+}
+
+.fc-admin-applications__pagination {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.fc-admin-applications__pagination div {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.fc-admin-application-detail__status,
+.fc-admin-application-detail__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fc-admin-application-detail__grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  margin-top: 28px;
+}
+
+.fc-admin-application-detail__grid article,
+.fc-admin-application-detail__grid aside {
+  background: var(--fc-color-page);
+  border-radius: var(--fc-radius-4);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 20px;
+}
+
+.fc-admin-application-detail dl {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 0;
+}
+
+.fc-admin-application-detail dt {
+  color: var(--fc-color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fc-admin-application-detail dd {
+  margin: 4px 0 0;
+}
+
+.fc-admin-applications__label {
+  color: var(--fc-color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.fc-admin-dialog {
+  border: 1px solid var(--fc-color-border);
+  border-radius: var(--fc-radius-4);
+  max-width: 480px;
+  padding: 24px;
+  width: calc(100% - 32px);
+}
+
+.fc-admin-dialog::backdrop {
+  background: rgb(20 20 18 / 0.45);
+}
+
+.fc-admin-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.fc-admin-applications-retry {
+  margin-top: 16px;
+}
+
+@media (max-width: 1024px) {
+  .fc-admin-application-detail__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fc-admin-applications__country {
+    margin-left: 0;
+  }
+}

@@ -435,7 +435,9 @@ textarea.fc-field__control {
   }
   .fc-admin-sidebar,
   .fc-admin-content {
-    display: none;
+    display: none !important;
+    pointer-events: none;
+    visibility: hidden;
   }
   .fc-admin-unsupported {
     align-items: center;
