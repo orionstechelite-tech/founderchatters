@@ -6,4 +6,8 @@ export default defineConfig({
       runtime: 'automatic',
     },
   },
+  test: {
+    // axe + multi-step userEvent onboarding coverage exceeds Vitest's 5s default.
+    testTimeout: 15_000,
+  },
 });

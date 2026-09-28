@@ -1138,3 +1138,336 @@ body {
     margin-left: 0;
   }
 }
+
+.fc-onboarding-shell {
+  background: var(--fc-color-page);
+  min-height: 100svh;
+  padding: 28px 48px 64px;
+}
+
+.fc-onboarding-topbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  min-height: 48px;
+}
+
+.fc-onboarding-wordmark,
+.fc-onboarding-progress {
+  font: 400 22px/1.2 var(--fc-font-serif);
+  margin: 0;
+}
+
+.fc-onboarding-progress,
+.fc-onboarding-step-label,
+.fc-onboarding-kicker {
+  font: 700 12px/1.2 var(--fc-font-sans);
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.fc-onboarding-hero {
+  background: var(--fc-color-subtle);
+  border-radius: var(--fc-radius-6);
+  margin-top: 28px;
+  padding: 24px 28px 28px;
+}
+
+.fc-onboarding-hero h1 {
+  font: 400 56px/1.02 var(--fc-font-serif);
+  margin: 12px 0 16px;
+  max-width: 16ch;
+}
+
+.fc-onboarding-hero h1:focus {
+  outline: none;
+}
+
+.fc-onboarding-hero h1:focus-visible {
+  outline: 3px solid var(--fc-color-blue);
+  outline-offset: 4px;
+}
+
+.fc-onboarding-hero > p:last-child,
+.fc-onboarding-status,
+.fc-onboarding-note,
+.fc-onboarding-state p {
+  color: var(--fc-color-text-secondary);
+  font-size: 16px;
+  line-height: 1.45;
+  max-width: 62ch;
+}
+
+.fc-onboarding-layout {
+  display: grid;
+  gap: 48px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  margin-top: 40px;
+}
+
+.fc-onboarding-layout--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.fc-onboarding-main {
+  display: grid;
+  gap: 18px;
+  max-width: 720px;
+  min-width: 0;
+}
+
+.fc-onboarding-main .fc-field,
+.fc-onboarding-main .fc-field__control {
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.fc-onboarding-main textarea.fc-field__control {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.fc-onboarding-location {
+  border: 0;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.fc-onboarding-location legend {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+}
+
+.fc-onboarding-location-fields {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.fc-onboarding-context {
+  background: var(--fc-color-inverse);
+  border-radius: var(--fc-radius-6);
+  color: var(--fc-color-text-inverse);
+  min-height: 300px;
+  padding: 24px;
+}
+
+.fc-onboarding-context .fc-onboarding-kicker {
+  color: var(--fc-color-accent);
+}
+
+.fc-onboarding-context h2 {
+  font: 400 34px/1.1 var(--fc-font-serif);
+  margin: 16px 0;
+}
+
+.fc-onboarding-context p {
+  color: #d4d5d0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.fc-onboarding-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.fc-onboarding-actions .fc-button,
+.fc-onboarding-next .fc-button {
+  min-height: 44px;
+}
+
+.fc-onboarding-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.fc-onboarding-chip {
+  align-items: center;
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: var(--fc-radius-full);
+  color: var(--fc-color-text);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 600;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  overflow-wrap: anywhere;
+  padding: 10px 18px;
+}
+
+.fc-onboarding-chip[data-selected='true'] {
+  background: var(--fc-color-inverse);
+  border-color: var(--fc-color-inverse);
+  color: var(--fc-color-text-inverse);
+}
+
+.fc-onboarding-chip:focus-visible {
+  outline: 3px solid var(--fc-color-blue);
+  outline-offset: 3px;
+}
+
+.fc-onboarding-field-error,
+.fc-onboarding-error-summary {
+  color: var(--fc-color-error);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.fc-onboarding-error-summary {
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: var(--fc-radius-3);
+  display: grid;
+  gap: 4px;
+  margin-top: 24px;
+  padding: 14px 16px;
+}
+
+.fc-onboarding-error-summary span {
+  color: var(--fc-color-text-secondary);
+}
+
+.fc-onboarding-ready {
+  display: grid;
+  gap: 40px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 320px);
+  margin-top: 40px;
+}
+
+.fc-onboarding-preview {
+  background: var(--fc-color-subtle);
+  border-radius: var(--fc-radius-6);
+  display: grid;
+  gap: 16px;
+  padding: 28px;
+}
+
+.fc-onboarding-identity {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+}
+
+.fc-onboarding-avatar {
+  align-items: center;
+  background: #e4d7a8;
+  border-radius: 50%;
+  display: inline-flex;
+  flex: 0 0 58px;
+  font-weight: 700;
+  height: 58px;
+  justify-content: center;
+  width: 58px;
+}
+
+.fc-onboarding-identity h2 {
+  font-size: 22px;
+  margin: 0;
+}
+
+.fc-onboarding-identity p,
+.fc-onboarding-need {
+  color: var(--fc-color-text-secondary);
+  margin: 4px 0 0;
+}
+
+.fc-onboarding-preview-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fc-onboarding-preview-chips li {
+  background: var(--fc-color-inverse);
+  border-radius: var(--fc-radius-full);
+  color: var(--fc-color-text-inverse);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 16px;
+}
+
+.fc-onboarding-next {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+}
+
+.fc-onboarding-next p {
+  margin: 0;
+  max-width: 28ch;
+}
+
+.fc-onboarding-state {
+  margin-top: 80px;
+  max-width: 40ch;
+}
+
+@media (max-width: 1024px) {
+  .fc-onboarding-shell {
+    padding: 24px 32px 48px;
+  }
+
+  .fc-onboarding-hero h1 {
+    font-size: 44px;
+  }
+
+  .fc-onboarding-layout,
+  .fc-onboarding-ready {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .fc-onboarding-shell {
+    padding: 18px 18px 40px;
+  }
+
+  .fc-onboarding-wordmark {
+    font-size: 20px;
+  }
+
+  .fc-onboarding-progress {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .fc-onboarding-hero {
+    background: transparent;
+    margin-top: 18px;
+    padding: 0;
+  }
+
+  .fc-onboarding-hero h1 {
+    font-size: 32px;
+    max-width: none;
+  }
+
+  .fc-onboarding-location-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fc-onboarding-context {
+    min-height: 0;
+  }
+
+  .fc-onboarding-chips {
+    gap: 12px;
+  }
+}

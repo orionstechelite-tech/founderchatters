@@ -170,20 +170,22 @@ model PasswordResetToken {
 }
 
 model FounderProfile {
-  id          String             @id @default(cuid())
-  userId      String             @unique
-  displayName String
-  headline    String?
-  bio         String?
-  city        String?
-  country     String?
-  avatarUrl   String?
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company     Company?
-  expertise   FounderExpertise[]
-  needs       FounderNeed[]
+  id               String             @id @default(cuid())
+  userId           String             @unique
+  displayName      String
+  headline         String?
+  bio              String?
+  city             String?
+  country          String?
+  avatarUrl        String?
+  customExpertise  String?
+  currentNeedText  String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company          Company?
+  expertise        FounderExpertise[]
+  needs            FounderNeed[]
 }
 
 model Company {
@@ -193,6 +195,7 @@ model Company {
   website          String?
   description      String?
   stage            String?
+  industry         String?
   city             String?
   country          String?
   createdAt        DateTime       @default(now())
