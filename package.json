@@ -19,6 +19,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint apps/api packages eslint.config.mjs && npm run lint --workspace @founderchatters/web",
+    "services:config": "docker compose -f docker-compose.dev.yml config --quiet",
+    "services:down": "docker compose -f docker-compose.dev.yml down",
+    "services:logs": "docker compose -f docker-compose.dev.yml logs --tail=100 postgres redis",
+    "services:status": "docker compose -f docker-compose.dev.yml ps",
+    "services:up": "docker compose -f docker-compose.dev.yml up -d --wait",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "validate": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"

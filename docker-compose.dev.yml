@@ -1,24 +1,27 @@
+name: founderchatters-dev
+
 services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: founderchatters
-      POSTGRES_PASSWORD: founderchatters
-      POSTGRES_DB: founderchatters
+      POSTGRES_USER: ${POSTGRES_USER:-founderchatters}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-founderchatters}
+      POSTGRES_DB: ${POSTGRES_DB:-founderchatters}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - fc_postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U founderchatters -d founderchatters"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 5s
 
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - fc_redis:/data
@@ -27,6 +30,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+      start_period: 5s
 
 volumes:
   fc_postgres:
