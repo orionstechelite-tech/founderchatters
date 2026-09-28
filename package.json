@@ -2,6 +2,7 @@
   "name": "founderchatters",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "description": "FounderChatters monorepo",
   "packageManager": "npm@11.13.0",
   "engines": {

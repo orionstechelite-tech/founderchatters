@@ -4,24 +4,33 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prebuild": "npm --prefix ../.. run db:generate && npm --prefix ../.. run build --workspace @founderchatters/contracts",
     "build": "tsc -p tsconfig.build.json",
+    "predev": "npm --prefix ../.. run db:generate && npm --prefix ../.. run build --workspace @founderchatters/contracts",
     "dev": "tsx watch src/main.ts",
     "lint": "eslint src test",
-    "start": "node dist/main.js",
+    "start": "node dist/apps/api/src/main.js",
+    "pretest": "npm --prefix ../.. run db:generate && npm --prefix ../.. run build --workspace @founderchatters/contracts",
     "test": "vitest run --pool=threads",
+    "pretypecheck": "npm --prefix ../.. run db:generate",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@founderchatters/contracts": "0.0.0",
     "@nestjs/common": "12.1.0",
     "@nestjs/core": "12.1.0",
     "@nestjs/platform-express": "12.1.0",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "argon2": "0.44.0",
+    "dotenv": "18.0.4",
     "pg": "8.23.0",
+    "redis": "5.8.2",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },
   "devDependencies": {
+    "@types/express": "5.0.3",
     "@types/pg": "8.23.1",
     "tsx": "4.23.15"
   }
