@@ -1,0 +1,14 @@
+{
+  "name": "@founderchatters/config",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "typescript"
+  ],
+  "exports": {
+    "./typescript/base.json": "./typescript/base.json",
+    "./typescript/nestjs.json": "./typescript/nestjs.json",
+    "./typescript/nextjs.json": "./typescript/nextjs.json",
+    "./typescript/package.json": "./typescript/package.json"
+  }
+}

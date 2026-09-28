@@ -1,0 +1,37 @@
+{
+  "name": "founderchatters",
+  "version": "0.0.0",
+  "private": true,
+  "description": "FounderChatters monorepo",
+  "packageManager": "npm@11.13.0",
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev:api": "npm run dev --workspace @founderchatters/api",
+    "dev:web": "npm run dev --workspace @founderchatters/web",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint apps/api packages eslint.config.mjs && npm run lint --workspace @founderchatters/web",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "validate": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.6",
+    "globals": "17.12.0",
+    "next": "16.3.6",
+    "prettier": "3.9.9",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.1",
+    "vitest": "5.0.2"
+  }
+}

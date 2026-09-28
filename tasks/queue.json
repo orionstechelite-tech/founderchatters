@@ -1,0 +1,372 @@
+{
+  "version": 1,
+  "project": "FounderChatters",
+  "tasks": [
+    {
+      "id": "FC-001",
+      "title": "Bootstrap monorepo",
+      "phase": "foundation",
+      "status": "completed",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [],
+      "acceptance": [
+        "npm workspaces configured",
+        "apps/web and apps/api boot",
+        "lint/typecheck/test commands exist",
+        "AGENTS.md at repo root"
+      ]
+    },
+    {
+      "id": "FC-002",
+      "title": "Local services",
+      "phase": "foundation",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-001"
+      ],
+      "acceptance": [
+        "PostgreSQL and Redis start via Docker Compose",
+        "health checks documented",
+        ".env.example complete"
+      ]
+    },
+    {
+      "id": "FC-003",
+      "title": "Prisma baseline",
+      "phase": "foundation",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-002"
+      ],
+      "acceptance": [
+        "schema compiles",
+        "initial migration generated",
+        "fictional seed data only"
+      ]
+    },
+    {
+      "id": "FC-004",
+      "title": "Design tokens and UI shell",
+      "phase": "foundation",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-001"
+      ],
+      "acceptance": [
+        "tokens match Figma",
+        "Button/Field primitives",
+        "member/public/admin shells"
+      ]
+    },
+    {
+      "id": "FC-005",
+      "title": "Auth sessions",
+      "phase": "identity",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-003"
+      ],
+      "acceptance": [
+        "signup/signin/signout/session",
+        "Argon2id",
+        "secure cookie",
+        "rate limits",
+        "tests"
+      ]
+    },
+    {
+      "id": "FC-006",
+      "title": "Email verification and reset",
+      "phase": "identity",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-005"
+      ],
+      "acceptance": [
+        "verify/resend/reset",
+        "single-use expiring hashed tokens",
+        "390 auth frames"
+      ]
+    },
+    {
+      "id": "FC-007",
+      "title": "Founder application",
+      "phase": "admission",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-006"
+      ],
+      "acceptance": [
+        "eligibility/company/status",
+        "submit/resubmit",
+        "state-machine tests",
+        "390 application frames"
+      ]
+    },
+    {
+      "id": "FC-008",
+      "title": "Admin application review",
+      "phase": "admission",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-007"
+      ],
+      "acceptance": [
+        "queue/detail",
+        "needs-info/approve/reject",
+        "audit",
+        "RBAC"
+      ]
+    },
+    {
+      "id": "FC-009",
+      "title": "Onboarding",
+      "phase": "admission",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-008"
+      ],
+      "acceptance": [
+        "4-step flow",
+        "expertise/needs persistence",
+        "mobile pattern",
+        "active-member gate"
+      ]
+    },
+    {
+      "id": "FC-010",
+      "title": "Founder profile and discover",
+      "phase": "member",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-009"
+      ],
+      "acceptance": [
+        "profile",
+        "discover",
+        "saved founders",
+        "responsive"
+      ]
+    },
+    {
+      "id": "FC-011",
+      "title": "Requests core",
+      "phase": "requests",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-010"
+      ],
+      "acceptance": [
+        "compose/preview/publish/detail",
+        "limit",
+        "resolve/delete",
+        "draft preservation"
+      ]
+    },
+    {
+      "id": "FC-012",
+      "title": "Help responses",
+      "phase": "help",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-011"
+      ],
+      "acceptance": [
+        "advice",
+        "intro offer",
+        "private-chat offer",
+        "consent gate"
+      ]
+    },
+    {
+      "id": "FC-013",
+      "title": "Messaging",
+      "phase": "messaging",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-012"
+      ],
+      "acceptance": [
+        "conversation list/detail",
+        "request context",
+        "idempotent send",
+        "privacy/block"
+      ]
+    },
+    {
+      "id": "FC-014",
+      "title": "Help confirmation and reputation",
+      "phase": "reputation",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-012"
+      ],
+      "acceptance": [
+        "outcomes",
+        "contribution only from HELPED",
+        "thank-you",
+        "reputation views"
+      ]
+    },
+    {
+      "id": "FC-015",
+      "title": "Notifications",
+      "phase": "retention",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-013",
+        "FC-014"
+      ],
+      "acceptance": [
+        "persisted notifications",
+        "read/read-all",
+        "delivery jobs",
+        "390 notification"
+      ]
+    },
+    {
+      "id": "FC-016",
+      "title": "Settings privacy security",
+      "phase": "member",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-015"
+      ],
+      "acceptance": [
+        "settings routes",
+        "session revoke",
+        "390 settings pattern"
+      ]
+    },
+    {
+      "id": "FC-017",
+      "title": "Safety reports blocks moderation",
+      "phase": "safety",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-016"
+      ],
+      "acceptance": [
+        "report/block",
+        "reporter privacy",
+        "suspension",
+        "scoped evidence",
+        "audit"
+      ]
+    },
+    {
+      "id": "FC-018",
+      "title": "Account deletion",
+      "phase": "safety",
+      "status": "pending",
+      "authorization": "HUMAN_APPROVAL_REQUIRED",
+      "depends_on": [
+        "FC-017"
+      ],
+      "acceptance": [
+        "confirmation",
+        "session revoke",
+        "anonymization workflow",
+        "audit",
+        "legal TODO explicit"
+      ]
+    },
+    {
+      "id": "FC-019",
+      "title": "Admin operations",
+      "phase": "admin",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-017"
+      ],
+      "acceptance": [
+        "admin routes",
+        "1024 support",
+        "<900 unsupported"
+      ]
+    },
+    {
+      "id": "FC-020",
+      "title": "Public marketing and support",
+      "phase": "public",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-004",
+        "FC-006"
+      ],
+      "acceptance": [
+        "marketing routes",
+        "legal/support",
+        "no fabricated traction",
+        "responsive"
+      ]
+    },
+    {
+      "id": "FC-021",
+      "title": "End-to-end QA",
+      "phase": "qa",
+      "status": "pending",
+      "authorization": "AUTO_LOCAL",
+      "depends_on": [
+        "FC-018",
+        "FC-019",
+        "FC-020"
+      ],
+      "acceptance": [
+        "golden paths",
+        "responsive matrix",
+        "accessibility",
+        "permission/privacy regression"
+      ]
+    },
+    {
+      "id": "FC-022",
+      "title": "Staging deploy",
+      "phase": "release",
+      "status": "pending",
+      "authorization": "HUMAN_APPROVAL_REQUIRED",
+      "depends_on": [
+        "FC-021"
+      ],
+      "acceptance": [
+        "migration review",
+        "rollback plan",
+        "health checks",
+        "smoke tests"
+      ]
+    },
+    {
+      "id": "FC-023",
+      "title": "Private alpha",
+      "phase": "release",
+      "status": "pending",
+      "authorization": "HUMAN_APPROVAL_REQUIRED",
+      "depends_on": [
+        "FC-022"
+      ],
+      "acceptance": [
+        "real founders invited",
+        "metrics verified",
+        "feedback captured"
+      ]
+    }
+  ]
+}

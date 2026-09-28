@@ -1,0 +1,492 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus { ACTIVE SUSPENDED DELETED }
+enum ApplicationStatus { DRAFT SUBMITTED NEEDS_INFO APPROVED REJECTED }
+enum RequestType { ASK FEEDBACK INTRODUCTION COLLABORATION }
+enum RequestStatus { DRAFT PUBLISHED RESOLVED DELETED_BY_AUTHOR MODERATED_REMOVED }
+enum ResponseType { ADVICE INTRODUCTION_OFFER PRIVATE_CHAT_OFFER }
+enum HelpOutcome { HELPED STILL_TALKING NOT_HELPFUL }
+enum IntroductionStatus { OFFERED CONSENT_PENDING INTRODUCED DECLINED CANCELLED }
+enum ConversationStatus { ACTIVE CLOSED }
+enum ReportTargetType { USER REQUEST RESPONSE MESSAGE }
+enum ReportStatus { OPEN UNDER_REVIEW DISMISSED ENFORCED }
+enum SupportCaseStatus { OPEN IN_PROGRESS WAITING_ON_USER RESOLVED CLOSED }
+enum NotificationDeliveryStatus { QUEUED SENT FAILED }
+
+model User {
+  id                    String     @id @default(cuid())
+  email                 String     @unique
+  passwordHash          String
+  emailVerifiedAt       DateTime?
+  status                UserStatus @default(ACTIVE)
+  suspendedUntil        DateTime?
+  suspensionReason      String?
+  onboardingCompletedAt DateTime?
+  deletedAt             DateTime?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  profile                 FounderProfile?
+  application             FounderApplication?
+  sessions                Session[]
+  requests                Request[]
+  responses               RequestResponse[]
+  sentMessages            Message[] @relation("SentMessages")
+  conversationMemberships ConversationParticipant[]
+  savedFounders           SavedFounder[] @relation("Saver")
+  savedBy                 SavedFounder[] @relation("SavedFounder")
+  reportsCreated          Report[] @relation("Reporter")
+  blocksCreated           Block[] @relation("Blocker")
+  blocksReceived          Block[] @relation("Blocked")
+  notifications           Notification[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens      PasswordResetToken[]
+  helpConfirmationsGiven   HelpConfirmation[] @relation("Confirmer")
+  helpConfirmationsReceived HelpConfirmation[] @relation("Helper")
+  contributionsReceived    Contribution[] @relation("Contributor")
+  adminRoles              UserAdminRole[]
+  auditActions            AuditLog[] @relation("AuditActor")
+  supportCases            SupportCase[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  userAgent String?
+  ipHash    String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, expiresAt])
+}
+
+model EmailVerificationToken {
+  id String @id @default(cuid())
+  userId String
+  tokenHash String @unique
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, expiresAt])
+}
+
+model PasswordResetToken {
+  id String @id @default(cuid())
+  userId String
+  tokenHash String @unique
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, expiresAt])
+}
+
+model FounderProfile {
+  id String @id @default(cuid())
+  userId String @unique
+  displayName String
+  headline String?
+  bio String?
+  city String?
+  country String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company?
+  expertise FounderExpertise[]
+  needs FounderNeed[]
+}
+
+model Company {
+  id String @id @default(cuid())
+  founderProfileId String @unique
+  name String
+  website String?
+  description String?
+  stage String?
+  city String?
+  country String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  founderProfile FounderProfile @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+}
+
+model TaxonomyTopic {
+  id String @id @default(cuid())
+  slug String @unique
+  label String
+  description String?
+  isActive Boolean @default(true)
+  mergedIntoId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expertise FounderExpertise[]
+  needs FounderNeed[]
+  requestTopics RequestTopic[]
+  contributionTopics ContributionTopic[]
+}
+
+model FounderExpertise {
+  profileId String
+  topicId String
+  createdAt DateTime @default(now())
+  profile FounderProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  topic TaxonomyTopic @relation(fields: [topicId], references: [id])
+  @@id([profileId, topicId])
+}
+
+model FounderNeed {
+  profileId String
+  topicId String
+  createdAt DateTime @default(now())
+  profile FounderProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  topic TaxonomyTopic @relation(fields: [topicId], references: [id])
+  @@id([profileId, topicId])
+}
+
+model FounderApplication {
+  id String @id @default(cuid())
+  userId String @unique
+  status ApplicationStatus @default(DRAFT)
+  eligibilityRole String?
+  companyName String?
+  roleTitle String?
+  website String?
+  city String?
+  country String?
+  buildingSummary String?
+  submittedAt DateTime?
+  decidedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events ApplicationStatusEvent[]
+}
+
+model ApplicationStatusEvent {
+  id String @id @default(cuid())
+  applicationId String
+  fromStatus ApplicationStatus?
+  toStatus ApplicationStatus
+  actorUserId String?
+  note String?
+  createdAt DateTime @default(now())
+  application FounderApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  @@index([applicationId, createdAt])
+}
+
+model Request {
+  id String @id @default(cuid())
+  authorId String
+  type RequestType
+  status RequestStatus @default(DRAFT)
+  headline String
+  context String
+  whoCouldHelp String?
+  urgency String?
+  publishedAt DateTime?
+  resolvedAt DateTime?
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author User @relation(fields: [authorId], references: [id])
+  topics RequestTopic[]
+  responses RequestResponse[]
+  conversations Conversation[]
+  helpConfirmations HelpConfirmation[]
+  @@index([authorId, status])
+  @@index([status, publishedAt])
+}
+
+model RequestTopic {
+  requestId String
+  topicId String
+  request Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  topic TaxonomyTopic @relation(fields: [topicId], references: [id])
+  @@id([requestId, topicId])
+}
+
+model RequestResponse {
+  id String @id @default(cuid())
+  requestId String
+  authorId String
+  type ResponseType
+  body String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  request Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id])
+  introduction IntroductionOffer?
+}
+
+model IntroductionOffer {
+  id String @id @default(cuid())
+  responseId String @unique
+  personName String
+  reason String?
+  status IntroductionStatus @default(OFFERED)
+  consentedAt DateTime?
+  introducedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  response RequestResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id String @id @default(cuid())
+  requestId String?
+  status ConversationStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  request Request? @relation(fields: [requestId], references: [id])
+  participants ConversationParticipant[]
+  messages Message[]
+}
+
+model ConversationParticipant {
+  conversationId String
+  userId String
+  joinedAt DateTime @default(now())
+  lastReadAt DateTime?
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([conversationId, userId])
+}
+
+model Message {
+  id String @id @default(cuid())
+  conversationId String
+  senderId String
+  clientMessageId String?
+  body String
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender User @relation("SentMessages", fields: [senderId], references: [id])
+  @@unique([conversationId, clientMessageId])
+  @@index([conversationId, createdAt])
+}
+
+model HelpConfirmation {
+  id String @id @default(cuid())
+  requestId String
+  confirmerId String
+  helperId String
+  responseId String?
+  outcome HelpOutcome
+  createdAt DateTime @default(now())
+  request Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  confirmer User @relation("Confirmer", fields: [confirmerId], references: [id])
+  helper User @relation("Helper", fields: [helperId], references: [id])
+  contribution Contribution?
+  @@index([requestId, confirmerId])
+}
+
+model Contribution {
+  id String @id @default(cuid())
+  helpConfirmationId String @unique
+  contributorId String
+  createdAt DateTime @default(now())
+  helpConfirmation HelpConfirmation @relation(fields: [helpConfirmationId], references: [id], onDelete: Cascade)
+  contributor User @relation("Contributor", fields: [contributorId], references: [id])
+  topics ContributionTopic[]
+  thankYou ThankYouNote?
+}
+
+model ContributionTopic {
+  contributionId String
+  topicId String
+  contribution Contribution @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+  topic TaxonomyTopic @relation(fields: [topicId], references: [id])
+  @@id([contributionId, topicId])
+}
+
+model ThankYouNote {
+  id String @id @default(cuid())
+  contributionId String @unique
+  body String?
+  createdAt DateTime @default(now())
+  contribution Contribution @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+}
+
+model SavedFounder {
+  saverId String
+  savedFounderId String
+  createdAt DateTime @default(now())
+  saver User @relation("Saver", fields: [saverId], references: [id], onDelete: Cascade)
+  savedFounder User @relation("SavedFounder", fields: [savedFounderId], references: [id], onDelete: Cascade)
+  @@id([saverId, savedFounderId])
+}
+
+model Notification {
+  id String @id @default(cuid())
+  userId String
+  type String
+  title String
+  body String?
+  href String?
+  readAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries NotificationDelivery[]
+  @@index([userId, readAt, createdAt])
+}
+
+model NotificationDelivery {
+  id String @id @default(cuid())
+  notificationId String
+  channel String
+  templateVersion String
+  status NotificationDeliveryStatus @default(QUEUED)
+  attemptCount Int @default(0)
+  lastErrorCode String?
+  sentAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  @@unique([notificationId, channel, templateVersion])
+}
+
+model NotificationTemplate {
+  id String @id @default(cuid())
+  key String @unique
+  version String
+  subject String?
+  body String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Report {
+  id String @id @default(cuid())
+  reporterId String
+  targetType ReportTargetType
+  targetId String
+  reasonCode String
+  details String?
+  status ReportStatus @default(OPEN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reporter User @relation("Reporter", fields: [reporterId], references: [id])
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+}
+
+model Block {
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  @@id([blockerId, blockedId])
+}
+
+model ModerationAction {
+  id String @id @default(cuid())
+  actorUserId String
+  targetType String
+  targetId String
+  action String
+  reason String?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+}
+
+model SupportCase {
+  id String @id @default(cuid())
+  userId String?
+  email String?
+  category String
+  subject String
+  status SupportCaseStatus @default(OPEN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User? @relation(fields: [userId], references: [id])
+  messages SupportMessage[]
+}
+
+model SupportMessage {
+  id String @id @default(cuid())
+  caseId String
+  actorType String
+  actorId String?
+  body String
+  createdAt DateTime @default(now())
+  supportCase SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+}
+
+model Permission {
+  id String @id @default(cuid())
+  key String @unique
+  description String?
+  roles RolePermission[]
+}
+
+model AdminRole {
+  id String @id @default(cuid())
+  key String @unique
+  name String
+  description String?
+  users UserAdminRole[]
+  permissions RolePermission[]
+}
+
+model RolePermission {
+  roleId String
+  permissionId String
+  role AdminRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  @@id([roleId, permissionId])
+}
+
+model UserAdminRole {
+  userId String
+  roleId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role AdminRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  @@id([userId, roleId])
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+  actorUserId String?
+  action String
+  targetType String?
+  targetId String?
+  reason String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  actor User? @relation("AuditActor", fields: [actorUserId], references: [id])
+  @@index([createdAt])
+  @@index([targetType, targetId])
+}
+
+model JobFailure {
+  id String @id @default(cuid())
+  queue String
+  jobName String
+  jobId String?
+  errorCode String?
+  message String?
+  attempts Int @default(0)
+  resolvedAt DateTime?
+  createdAt DateTime @default(now())
+}
+
+model PlatformSetting {
+  key String @id
+  value Json
+  updatedAt DateTime @updatedAt
+}
