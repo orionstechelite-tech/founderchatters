@@ -1,6 +1,7 @@
 export const contractsPackageName = '@founderchatters/contracts';
 
 export const AUTH_ERROR_CODES = {
+  emailNotVerified: 'AUTH_EMAIL_NOT_VERIFIED',
   forbidden: 'AUTH_FORBIDDEN',
   invalidCredentials: 'AUTH_INVALID_CREDENTIALS',
   rateLimited: 'AUTH_RATE_LIMITED',
@@ -82,4 +83,60 @@ export type ApiErrorResponse = {
     requestId: string;
     fieldErrors: Record<string, string[]>;
   };
+};
+
+export const APPLICATION_ERROR_CODES = {
+  alreadySubmitted: 'APPLICATION_ALREADY_SUBMITTED',
+  invalidState: 'APPLICATION_INVALID_STATE',
+  needsInfo: 'APPLICATION_NEEDS_INFO',
+  notFound: 'APPLICATION_NOT_FOUND',
+} as const;
+
+export type ApplicationErrorCode =
+  (typeof APPLICATION_ERROR_CODES)[keyof typeof APPLICATION_ERROR_CODES];
+
+export type ApplicationStatus =
+  | 'DRAFT'
+  | 'SUBMITTED'
+  | 'NEEDS_INFO'
+  | 'APPROVED'
+  | 'REJECTED';
+
+export const APPLICATION_ELIGIBILITY_ROLES = {
+  founder: 'FOUNDER_COFOUNDER',
+  operator: 'FOUNDING_TEAM_OPERATOR',
+  notBuilding: 'NOT_CURRENTLY_BUILDING',
+} as const;
+
+export type ApplicationEligibilityRole =
+  (typeof APPLICATION_ELIGIBILITY_ROLES)[keyof typeof APPLICATION_ELIGIBILITY_ROLES];
+
+export type UpdateFounderApplicationRequest = {
+  eligibilityRole?: ApplicationEligibilityRole;
+  companyName?: string;
+  roleTitle?: string;
+  website?: string | null;
+  city?: string;
+  country?: string;
+  buildingSummary?: string;
+};
+
+export type FounderApplication = {
+  id: string;
+  status: ApplicationStatus;
+  eligibilityRole: ApplicationEligibilityRole | null;
+  companyName: string | null;
+  roleTitle: string | null;
+  website: string | null;
+  city: string | null;
+  country: string | null;
+  buildingSummary: string | null;
+  submittedAt: string | null;
+  decidedAt: string | null;
+  updatedAt: string;
+  needsInfoNote: string | null;
+};
+
+export type FounderApplicationResponse = {
+  application: FounderApplication;
 };

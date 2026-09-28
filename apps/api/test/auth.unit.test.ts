@@ -551,6 +551,103 @@ describe('AuthService', () => {
     expect(result.response.access.state).toBe('VERIFY_EMAIL');
   });
 
+  it.each([
+    [null, 'APPLICATION'],
+    ['DRAFT', 'APPLICATION'],
+    ['SUBMITTED', 'APPLICATION'],
+    ['NEEDS_INFO', 'APPLICATION'],
+    ['REJECTED', 'APPLICATION'],
+  ] as const)(
+    'keeps access state APPLICATION for application status %s',
+    async (applicationStatus, state) => {
+      const service = new AuthService(
+        {} as PrismaService,
+        {} as PasswordHasher,
+        {
+          authenticate: vi.fn().mockResolvedValue({
+            sessionId: 'session-1',
+            user: {
+              id: 'user-1',
+              email: 'founder@example.com',
+              emailVerifiedAt: new Date('2026-09-28T00:00:00.000Z'),
+              status: 'ACTIVE',
+              onboardingCompletedAt: null,
+              application: applicationStatus
+                ? { status: applicationStatus }
+                : null,
+            },
+          }),
+        } as unknown as SessionService,
+        {} as never,
+        {} as never,
+      );
+
+      await expect(service.session('raw-token')).resolves.toMatchObject({
+        access: { state, applicationStatus },
+      });
+    },
+  );
+
+  it('maps an approved application without onboarding to ONBOARDING', async () => {
+    const service = new AuthService(
+      {} as PrismaService,
+      {} as PasswordHasher,
+      {
+        authenticate: vi.fn().mockResolvedValue({
+          sessionId: 'session-1',
+          user: {
+            id: 'user-1',
+            email: 'founder@example.com',
+            emailVerifiedAt: new Date('2026-09-28T00:00:00.000Z'),
+            status: 'ACTIVE',
+            onboardingCompletedAt: null,
+            application: { status: 'APPROVED' },
+          },
+        }),
+      } as unknown as SessionService,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(service.session('raw-token')).resolves.toMatchObject({
+      access: {
+        state: 'ONBOARDING',
+        applicationStatus: 'APPROVED',
+        onboardingCompleted: false,
+      },
+    });
+  });
+
+  it('maps an approved and onboarded founder to ACTIVE', async () => {
+    const service = new AuthService(
+      {} as PrismaService,
+      {} as PasswordHasher,
+      {
+        authenticate: vi.fn().mockResolvedValue({
+          sessionId: 'session-1',
+          user: {
+            id: 'user-1',
+            email: 'founder@example.com',
+            emailVerifiedAt: new Date('2026-09-28T00:00:00.000Z'),
+            status: 'ACTIVE',
+            onboardingCompletedAt: new Date('2026-09-28T00:00:00.000Z'),
+            application: { status: 'APPROVED' },
+          },
+        }),
+      } as unknown as SessionService,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(service.session('raw-token')).resolves.toMatchObject({
+      access: {
+        state: 'ACTIVE',
+        applicationStatus: 'APPROVED',
+        onboardingCompleted: true,
+      },
+    });
+  });
+
   it('rejects invalid input with field errors', async () => {
     const service = new AuthService(
       {} as PrismaService,

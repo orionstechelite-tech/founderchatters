@@ -254,3 +254,674 @@ body {
     font-size: 38px;
   }
 }
+
+.sr-only {
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.fc-application-shell {
+  background: var(--fc-color-surface);
+  min-height: 100svh;
+  min-width: 0;
+  padding: 28px 48px 64px;
+}
+
+.fc-application-topbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  min-height: 48px;
+}
+
+.fc-application-wordmark,
+.fc-application-mobile-title {
+  color: var(--fc-color-text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+}
+
+.fc-application-network {
+  color: var(--fc-color-text-secondary);
+  font-size: 13px;
+}
+
+.fc-application-mobile-back,
+.fc-application-mobile-title {
+  display: none;
+}
+
+.fc-application-hero {
+  background: var(--fc-color-page);
+  border-radius: var(--fc-radius-6);
+  margin-top: 28px;
+  min-height: 210px;
+  min-width: 0;
+  padding: 24px 28px 26px;
+}
+
+.fc-application-label,
+.fc-application-mobile-step {
+  color: var(--fc-color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.fc-application-hero h1 {
+  font: 400 54px/0.98 var(--fc-font-serif);
+  margin: 16px 0 34px;
+  max-width: 960px;
+  overflow-wrap: anywhere;
+}
+
+.fc-application-title-mobile,
+.fc-application-copy-mobile,
+.fc-application-mobile-action,
+.fc-application-eligibility-note,
+.fc-application-form-note {
+  display: none;
+}
+
+.fc-application-hero > p:last-child {
+  color: var(--fc-color-text-secondary);
+  font-size: 16px;
+  line-height: 1.45;
+  margin: 0;
+  max-width: 950px;
+  overflow-wrap: anywhere;
+}
+
+.fc-application-layout,
+.fc-application-status-layout {
+  display: grid;
+  gap: 56px;
+  grid-template-columns: minmax(0, 720px) minmax(0, 360px);
+  margin: 40px auto 0;
+  max-width: 1216px;
+  min-width: 0;
+}
+
+.fc-application-main,
+.fc-application-form {
+  min-width: 0;
+}
+
+.fc-application-main h2 {
+  font-size: 36px;
+  line-height: 1.12;
+  margin: 0;
+}
+
+.fc-application-eligibility-card {
+  min-width: 0;
+}
+
+.fc-application-intro {
+  color: var(--fc-color-text-secondary);
+  font-size: 16px;
+  line-height: 1.45;
+  margin: 18px 0 24px;
+}
+
+.fc-application-mobile-step {
+  display: none;
+}
+
+.fc-application-choices {
+  border: 0;
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  max-width: 680px;
+  padding: 0;
+}
+
+.fc-application-choice {
+  align-items: center;
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: var(--fc-radius-4);
+  cursor: pointer;
+  display: flex;
+  font-size: 15px;
+  font-weight: 600;
+  min-height: 64px;
+  min-width: 0;
+  padding: 14px 17px;
+}
+
+.fc-application-choice[data-selected='true'] {
+  background: var(--fc-color-inverse);
+  border-color: var(--fc-color-inverse);
+  color: var(--fc-color-text-inverse);
+}
+
+.fc-application-choice input {
+  flex: 0 0 auto;
+  height: 20px;
+  margin: 0 12px 0 0;
+  width: 20px;
+}
+
+.fc-application-choice span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.fc-application-choice:focus-within {
+  outline: 3px solid var(--fc-color-blue);
+  outline-offset: 2px;
+}
+
+.fc-application-field-error,
+.fc-application-message,
+.fc-application-ineligible {
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 10px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.fc-application-field-error,
+.fc-application-message {
+  color: var(--fc-color-error);
+}
+
+.fc-application-ineligible {
+  background: var(--fc-color-page);
+  border: 1px solid var(--fc-color-border);
+  border-radius: var(--fc-radius-3);
+  color: var(--fc-color-text);
+  padding: 12px 14px;
+}
+
+.fc-application-message[role='status'] {
+  color: var(--fc-color-text-secondary);
+}
+
+.fc-application-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.fc-application-actions .fc-button,
+.fc-application-secondary-link {
+  max-width: 100%;
+  min-height: 44px;
+  min-width: 0;
+}
+
+.fc-application-secondary-link {
+  align-items: center;
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: var(--fc-radius-full);
+  color: var(--fc-color-text);
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 600;
+  justify-content: center;
+  padding: 10px 20px;
+  text-decoration: none;
+}
+
+.fc-application-secondary-link:focus-visible,
+.fc-application-wordmark:focus-visible,
+.fc-application-mobile-back:focus-visible {
+  outline: 3px solid var(--fc-color-blue);
+  outline-offset: 3px;
+}
+
+.fc-application-context {
+  min-width: 0;
+}
+
+.fc-application-context h3 {
+  font-size: 34px;
+  line-height: 1.12;
+  margin: 24px 0;
+}
+
+.fc-application-context > p:last-child {
+  color: var(--fc-color-text-secondary);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.fc-application-context hr {
+  border: 0;
+  border-top: 1px solid var(--fc-color-border);
+  margin: 24px 0;
+}
+
+.fc-application-context--dark {
+  background: var(--fc-color-inverse);
+  border-radius: var(--fc-radius-6);
+  color: var(--fc-color-text-inverse);
+  min-height: 330px;
+  padding: 24px;
+}
+
+.fc-application-context--dark .fc-application-label {
+  color: var(--fc-color-accent);
+}
+
+.fc-application-context--dark h3 {
+  font: 400 34px/1.05 var(--fc-font-serif);
+}
+
+.fc-application-context--dark > p:last-child {
+  color: #d4d5d0;
+}
+
+.fc-application-form {
+  display: grid;
+  gap: 18px;
+  max-width: 620px;
+  min-width: 0;
+  width: 100%;
+}
+
+.fc-application-form .fc-field {
+  max-width: none;
+  min-width: 0;
+  width: 100%;
+}
+
+.fc-application-form .fc-field__control {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  width: 100%;
+}
+
+.fc-application-form textarea.fc-field__control {
+  min-height: 136px;
+  resize: vertical;
+}
+
+.fc-application-location {
+  border: 0;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.fc-application-location legend {
+  color: var(--fc-color-text);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+}
+
+.fc-application-location-fields {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-width: 0;
+}
+
+.fc-application-error-summary,
+.fc-application-request {
+  background: var(--fc-color-page);
+  border: 1px solid var(--fc-color-border);
+  border-radius: var(--fc-radius-3);
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 14px 16px;
+}
+
+.fc-application-error-summary span,
+.fc-application-request span {
+  color: var(--fc-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.fc-application-review {
+  margin: 40px auto 0;
+  max-width: 760px;
+  min-width: 0;
+}
+
+.fc-application-review dl {
+  background: var(--fc-color-page);
+  border-radius: var(--fc-radius-6);
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 12px 28px;
+}
+
+.fc-application-review dl > div {
+  border-bottom: 1px solid var(--fc-color-border);
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 180px) minmax(0, 1fr);
+  min-width: 0;
+  padding: 18px 0;
+}
+
+.fc-application-review dl > div:last-child {
+  border-bottom: 0;
+}
+
+.fc-application-review dt {
+  color: var(--fc-color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
+}
+
+.fc-application-review dd {
+  line-height: 1.5;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.fc-application-status-card {
+  background: var(--fc-color-page);
+  border-radius: var(--fc-radius-6);
+  min-height: 410px;
+  min-width: 0;
+  padding: 30px 28px;
+}
+
+.fc-application-status-card h2 {
+  font: 400 44px/1.05 var(--fc-font-serif);
+  margin: 34px 0 12px;
+}
+
+.fc-application-status-card > p:not(.fc-application-label) {
+  color: var(--fc-color-text-secondary);
+  line-height: 1.5;
+  max-width: 680px;
+  overflow-wrap: anywhere;
+}
+
+.fc-application-status-card .fc-button,
+.fc-application-status-card .fc-application-secondary-link {
+  margin-top: 24px;
+}
+
+.fc-application-date {
+  font-size: 13px;
+}
+
+.fc-application-request {
+  margin-top: 20px;
+}
+
+.fc-application-next ol {
+  display: grid;
+  font-size: 24px;
+  font-weight: 600;
+  gap: 14px;
+  line-height: 1.2;
+  margin: 24px 0 0;
+  padding-left: 30px;
+}
+
+.fc-application-state {
+  margin: 15vh auto 0;
+  max-width: 560px;
+  text-align: center;
+}
+
+.fc-application-state > span {
+  align-items: center;
+  background: var(--fc-color-accent);
+  border-radius: 50%;
+  display: inline-flex;
+  font-weight: 700;
+  height: 56px;
+  justify-content: center;
+  width: 56px;
+}
+
+.fc-application-state h1 {
+  font: 400 44px/1.05 var(--fc-font-serif);
+}
+
+.fc-application-state > div {
+  color: var(--fc-color-text-secondary);
+  line-height: 1.5;
+}
+
+.fc-application-state__action {
+  display: flex;
+  margin: 24px auto 0;
+}
+
+@media (max-width: 1024px) {
+  .fc-application-shell {
+    padding-inline: 32px;
+  }
+
+  .fc-application-layout,
+  .fc-application-status-layout {
+    gap: 40px;
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  }
+
+  .fc-application-hero h1 {
+    font-size: 48px;
+  }
+
+  .fc-application-context h3 {
+    font-size: 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .fc-application-shell {
+    padding: 18px 24px 48px;
+  }
+
+  .fc-application-topbar {
+    justify-content: flex-start;
+    min-height: 30px;
+  }
+
+  .fc-application-wordmark,
+  .fc-application-network {
+    display: none;
+  }
+
+  .fc-application-mobile-back {
+    align-items: center;
+    color: var(--fc-color-text-secondary);
+    display: inline-flex;
+    font-size: 16px;
+    height: 44px;
+    justify-content: flex-start;
+    text-decoration: none;
+    width: 44px;
+  }
+
+  .fc-application-mobile-title {
+    display: inline;
+  }
+
+  .fc-application-hero {
+    background: transparent;
+    border-radius: 0;
+    margin-top: 26px;
+    min-height: 0;
+    padding: 0;
+  }
+
+  .fc-application-hero .fc-application-label {
+    display: none;
+  }
+
+  .fc-application-hero h1 {
+    font: 600 40px/1.12 var(--fc-font-sans);
+    margin: 0 0 12px;
+  }
+
+  .fc-application-title-desktop,
+  .fc-application-copy-desktop,
+  .fc-application-desktop-action {
+    display: none;
+  }
+
+  .fc-application-title-mobile,
+  .fc-application-mobile-action {
+    display: inline;
+  }
+
+  .fc-application-copy-mobile {
+    display: block;
+  }
+
+  .fc-application-mobile-action.fc-button {
+    display: inline-flex;
+  }
+
+  .fc-application-hero > p:last-child {
+    max-width: 600px;
+  }
+
+  .fc-application-layout,
+  .fc-application-status-layout {
+    display: block;
+    margin-top: 34px;
+    max-width: 620px;
+  }
+
+  .fc-application-mobile-step {
+    display: block;
+    margin-bottom: 24px;
+  }
+
+  .fc-application-main h2 {
+    font-size: 28px;
+  }
+
+  .fc-application-context,
+  .fc-application-next {
+    margin-top: 40px;
+  }
+
+  .fc-application-form {
+    max-width: none;
+  }
+
+  .fc-application-review {
+    margin-top: 34px;
+  }
+}
+
+@media (max-width: 390px) {
+  .fc-application-shell {
+    padding: 18px 20px 42px;
+  }
+
+  .fc-application-hero {
+    margin-top: 26px;
+  }
+
+  .fc-application-hero h1 {
+    font-size: 36px;
+    overflow-wrap: anywhere;
+  }
+
+  .fc-application-layout,
+  .fc-application-status-layout {
+    margin-top: 30px;
+  }
+
+  .fc-application-main h2 {
+    font-size: 24px;
+  }
+
+  .fc-application-eligibility-card {
+    background: var(--fc-color-page);
+    border: 1px solid var(--fc-color-border);
+    border-radius: var(--fc-radius-4);
+    padding: 15px 13px 18px;
+  }
+
+  .fc-application-eligibility-card .fc-application-intro {
+    display: none;
+  }
+
+  .fc-application-eligibility-note,
+  .fc-application-form-note {
+    color: var(--fc-color-text-secondary);
+    display: block;
+    font-size: 13px;
+    line-height: 1.4;
+    margin: 16px 0 0;
+  }
+
+  .fc-application-choice {
+    font-size: 16px;
+    font-weight: 400;
+    min-height: 48px;
+  }
+
+  .fc-application-actions {
+    display: grid;
+  }
+
+  .fc-application-actions .fc-button,
+  .fc-application-actions .fc-application-secondary-link {
+    width: 100%;
+  }
+
+  .fc-application-location-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fc-application-context {
+    display: none;
+  }
+
+  .fc-application-review dl {
+    padding-inline: 14px;
+  }
+
+  .fc-application-review dl > div {
+    gap: 6px;
+    grid-template-columns: 1fr;
+  }
+
+  .fc-application-status-card {
+    border: 1px solid var(--fc-color-border);
+    border-radius: var(--fc-radius-4);
+    min-height: 0;
+    padding: 16px 13px;
+  }
+
+  .fc-application-status-card h2 {
+    font: 600 24px/1.2 var(--fc-font-sans);
+    margin-top: 28px;
+    overflow-wrap: anywhere;
+  }
+
+  .fc-application-next {
+    display: none;
+  }
+}
