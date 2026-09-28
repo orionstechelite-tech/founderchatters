@@ -140,3 +140,103 @@ export type FounderApplication = {
 export type FounderApplicationResponse = {
   application: FounderApplication;
 };
+
+export const ADMIN_ERROR_CODES = {
+  permissionDenied: 'ADMIN_PERMISSION_DENIED',
+  actionInvalidState: 'ADMIN_ACTION_INVALID_STATE',
+} as const;
+
+export type AdminErrorCode =
+  (typeof ADMIN_ERROR_CODES)[keyof typeof ADMIN_ERROR_CODES];
+
+export const ADMIN_PERMISSIONS = {
+  applicationsRead: 'admin.applications.read',
+  applicationsNeedsInfo: 'admin.applications.needs_info',
+  applicationsApprove: 'admin.applications.approve',
+  applicationsReject: 'admin.applications.reject',
+} as const;
+
+export type AdminPermission =
+  (typeof ADMIN_PERMISSIONS)[keyof typeof ADMIN_PERMISSIONS];
+
+export const ADMIN_ROLES = {
+  superAdmin: 'SUPER_ADMIN',
+  applicationReviewer: 'APPLICATION_REVIEWER',
+  operations: 'OPERATIONS',
+  moderator: 'MODERATOR',
+  support: 'SUPPORT',
+  analystReadonly: 'ANALYST_READONLY',
+} as const;
+
+export type AdminRoleKey = (typeof ADMIN_ROLES)[keyof typeof ADMIN_ROLES];
+
+export const ADMIN_APPLICATION_QUEUE_STATUSES = [
+  'SUBMITTED',
+  'NEEDS_INFO',
+  'APPROVED',
+  'REJECTED',
+] as const;
+
+export type AdminApplicationQueueStatus =
+  (typeof ADMIN_APPLICATION_QUEUE_STATUSES)[number];
+
+export type AdminApplicationQueueItem = {
+  id: string;
+  status: AdminApplicationQueueStatus;
+  eligibilityRole: ApplicationEligibilityRole | null;
+  companyName: string | null;
+  roleTitle: string | null;
+  city: string | null;
+  country: string | null;
+  submittedAt: string | null;
+  decidedAt: string | null;
+  updatedAt: string;
+  applicantEmail: string;
+  emailVerified: boolean;
+};
+
+export type AdminApplicationQueueResponse = {
+  applications: AdminApplicationQueueItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  status: AdminApplicationQueueStatus;
+  country: string | null;
+  countries: string[];
+};
+
+export type AdminApplicationCapabilities = {
+  needsInfo: boolean;
+  approve: boolean;
+  reject: boolean;
+};
+
+export type AdminApplicationDetail = {
+  id: string;
+  status: ApplicationStatus;
+  eligibilityRole: ApplicationEligibilityRole | null;
+  companyName: string | null;
+  roleTitle: string | null;
+  website: string | null;
+  city: string | null;
+  country: string | null;
+  buildingSummary: string | null;
+  submittedAt: string | null;
+  decidedAt: string | null;
+  updatedAt: string;
+  latestReviewNote: string | null;
+  applicant: {
+    email: string;
+    emailVerified: boolean;
+  };
+};
+
+export type AdminApplicationDetailResponse = {
+  application: AdminApplicationDetail;
+  capabilities: AdminApplicationCapabilities;
+};
+
+export type AdminApplicationDecisionRequest = {
+  note?: string;
+};
