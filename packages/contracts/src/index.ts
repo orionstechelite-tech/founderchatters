@@ -473,3 +473,129 @@ export type SavedFounderMutationResponse = {
   saved: boolean;
   savedCount: number;
 };
+
+export const REQUEST_ERROR_CODES = {
+  notFound: 'REQUEST_NOT_FOUND',
+  forbidden: 'REQUEST_FORBIDDEN',
+  limitReached: 'REQUEST_LIMIT_REACHED',
+  invalidState: 'REQUEST_INVALID_STATE',
+  publishFailed: 'REQUEST_PUBLISH_FAILED',
+  invalidInput: 'REQUEST_INVALID_INPUT',
+} as const;
+
+export type RequestErrorCode =
+  (typeof REQUEST_ERROR_CODES)[keyof typeof REQUEST_ERROR_CODES];
+
+export const REQUEST_TYPES = {
+  ask: 'ASK',
+  feedback: 'FEEDBACK',
+  introduction: 'INTRODUCTION',
+  collaboration: 'COLLABORATION',
+} as const;
+
+export type RequestType = (typeof REQUEST_TYPES)[keyof typeof REQUEST_TYPES];
+
+export const REQUEST_STATUSES = {
+  draft: 'DRAFT',
+  published: 'PUBLISHED',
+  resolved: 'RESOLVED',
+  deletedByAuthor: 'DELETED_BY_AUTHOR',
+  moderatedRemoved: 'MODERATED_REMOVED',
+} as const;
+
+export type RequestStatus =
+  (typeof REQUEST_STATUSES)[keyof typeof REQUEST_STATUSES];
+
+export const MEMBER_REQUEST_LIST_STATUSES = [
+  REQUEST_STATUSES.draft,
+  REQUEST_STATUSES.published,
+  REQUEST_STATUSES.resolved,
+] as const;
+
+export type MemberRequestListStatus =
+  (typeof MEMBER_REQUEST_LIST_STATUSES)[number];
+
+export const REQUEST_URGENCIES = {
+  today: 'TODAY',
+  thisWeek: 'THIS_WEEK',
+  noRush: 'NO_RUSH',
+} as const;
+
+export type RequestUrgency =
+  (typeof REQUEST_URGENCIES)[keyof typeof REQUEST_URGENCIES];
+
+export const REQUEST_URGENCY_LABELS = {
+  TODAY: 'Today',
+  THIS_WEEK: 'This week',
+  NO_RUSH: 'No rush',
+} as const satisfies Record<RequestUrgency, string>;
+
+export const REQUEST_LIMITS = {
+  openPublished: 3,
+  headlineMax: 160,
+  headlinePublishMin: 10,
+  contextMax: 2000,
+  contextPublishMin: 30,
+  whoCouldHelpMax: 300,
+  topicIdsMax: 3,
+  pageSizeDefault: 20,
+  pageSizeMax: 50,
+  pageMax: 10_000,
+} as const;
+
+export type UpsertRequestBody = {
+  type?: RequestType;
+  headline?: string;
+  context?: string;
+  whoCouldHelp?: string | null;
+  urgency?: RequestUrgency | null;
+  topicIds?: string[];
+};
+
+export type CreateRequestBody = UpsertRequestBody & {
+  type: RequestType;
+};
+
+export type MemberRequestAuthor = {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+  companyName: string;
+  city: string | null;
+  country: string | null;
+};
+
+export type MemberRequest = {
+  id: string;
+  type: RequestType;
+  status: MemberRequestListStatus;
+  headline: string;
+  context: string;
+  whoCouldHelp: string | null;
+  urgency: RequestUrgency | null;
+  topics: MemberTopicRef[];
+  responseCount: number;
+  publishedAt: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  author: MemberRequestAuthor;
+};
+
+export type MemberRequestResponse = {
+  request: MemberRequest;
+};
+
+export type OwnRequestsResponse = {
+  requests: MemberRequest[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  status: MemberRequestListStatus | null;
+  availableTopics: MemberTopicRef[];
+};
+
+export type RequestDeletedResponse = {
+  deleted: true;
+};

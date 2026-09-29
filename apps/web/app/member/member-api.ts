@@ -1,7 +1,11 @@
 import type {
   DiscoverFoundersResponse,
   MemberFounderProfileResponse,
+  MemberRequestResponse,
+  OwnRequestsResponse,
+  RequestDeletedResponse,
   SavedFounderMutationResponse,
+  UpsertRequestBody,
 } from '@founderchatters/contracts';
 
 import {
@@ -73,6 +77,57 @@ export function unsaveFounder(
 ): Promise<SavedFounderMutationResponse> {
   return onboardingRequest<SavedFounderMutationResponse>(
     `founders/${encodeURIComponent(id)}/save`,
+    { method: 'DELETE' },
+  );
+}
+
+export function listOwnRequests(status?: string): Promise<OwnRequestsResponse> {
+  const suffix = status ? `?status=${encodeURIComponent(status)}` : '';
+  return onboardingRequest<OwnRequestsResponse>(`requests${suffix}`);
+}
+
+export function getRequest(id: string): Promise<MemberRequestResponse> {
+  return onboardingRequest<MemberRequestResponse>(
+    `requests/${encodeURIComponent(id)}`,
+  );
+}
+
+export function createRequest(
+  body: UpsertRequestBody & { type: NonNullable<UpsertRequestBody['type']> },
+): Promise<MemberRequestResponse> {
+  return onboardingRequest<MemberRequestResponse>('requests', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export function patchRequest(
+  id: string,
+  body: UpsertRequestBody,
+): Promise<MemberRequestResponse> {
+  return onboardingRequest<MemberRequestResponse>(
+    `requests/${encodeURIComponent(id)}`,
+    { method: 'PATCH', body: JSON.stringify(body) },
+  );
+}
+
+export function publishRequest(id: string): Promise<MemberRequestResponse> {
+  return onboardingRequest<MemberRequestResponse>(
+    `requests/${encodeURIComponent(id)}/publish`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
+}
+
+export function resolveRequest(id: string): Promise<MemberRequestResponse> {
+  return onboardingRequest<MemberRequestResponse>(
+    `requests/${encodeURIComponent(id)}/resolve`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
+}
+
+export function deleteRequest(id: string): Promise<RequestDeletedResponse> {
+  return onboardingRequest<RequestDeletedResponse>(
+    `requests/${encodeURIComponent(id)}`,
     { method: 'DELETE' },
   );
 }

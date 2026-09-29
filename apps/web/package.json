@@ -7,7 +7,7 @@
     "dev": "node ../../tooling/next-cli.mjs dev --webpack",
     "lint": "eslint .",
     "start": "next start",
-    "test": "vitest run --pool=threads",
+    "test": "vitest run --pool=threads --fileParallelism=false",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
