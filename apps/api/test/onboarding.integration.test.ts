@@ -54,40 +54,43 @@ describe('onboarding HTTP integration', { timeout: 30_000 }, () => {
   }, 60_000);
 
   afterAll(async () => {
-    if (userIds.length > 0) {
-      const profiles = await prisma.founderProfile.findMany({
-        where: { userId: { in: userIds } },
-        select: { id: true },
-      });
-      const profileIds = profiles.map(({ id }) => id);
-      await prisma.founderExpertise.deleteMany({
-        where: { profileId: { in: profileIds } },
-      });
-      await prisma.founderNeed.deleteMany({
-        where: { profileId: { in: profileIds } },
-      });
-      await prisma.company.deleteMany({
-        where: { founderProfileId: { in: profileIds } },
-      });
-      await prisma.founderProfile.deleteMany({
-        where: { userId: { in: userIds } },
-      });
-      const applicationIds = (
-        await prisma.founderApplication.findMany({
+    try {
+      if (userIds.length > 0) {
+        const profiles = await prisma.founderProfile.findMany({
           where: { userId: { in: userIds } },
           select: { id: true },
-        })
-      ).map(({ id }) => id);
-      await prisma.applicationStatusEvent.deleteMany({
-        where: { applicationId: { in: applicationIds } },
-      });
-      await prisma.founderApplication.deleteMany({
-        where: { userId: { in: userIds } },
-      });
-      await prisma.session.deleteMany({ where: { userId: { in: userIds } } });
-      await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+        });
+        const profileIds = profiles.map(({ id }) => id);
+        await prisma.founderExpertise.deleteMany({
+          where: { profileId: { in: profileIds } },
+        });
+        await prisma.founderNeed.deleteMany({
+          where: { profileId: { in: profileIds } },
+        });
+        await prisma.company.deleteMany({
+          where: { founderProfileId: { in: profileIds } },
+        });
+        await prisma.founderProfile.deleteMany({
+          where: { userId: { in: userIds } },
+        });
+        const applicationIds = (
+          await prisma.founderApplication.findMany({
+            where: { userId: { in: userIds } },
+            select: { id: true },
+          })
+        ).map(({ id }) => id);
+        await prisma.applicationStatusEvent.deleteMany({
+          where: { applicationId: { in: applicationIds } },
+        });
+        await prisma.founderApplication.deleteMany({
+          where: { userId: { in: userIds } },
+        });
+        await prisma.session.deleteMany({ where: { userId: { in: userIds } } });
+        await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+      }
+    } finally {
+      await app.close();
     }
-    await app.close();
   }, 60_000);
 
   async function approvedFounder(
@@ -220,17 +223,20 @@ describe('onboarding HTTP integration', { timeout: 30_000 }, () => {
       where: { slug: 'product' },
       data: { label: 'Product (admin edited)' },
     });
-    await ensureOnboardingTaxonomy(prisma, true);
-    await expect(
-      prisma.taxonomyTopic.findUniqueOrThrow({ where: { slug: 'product' } }),
-    ).resolves.toMatchObject({
-      id: product.id,
-      label: 'Product (admin edited)',
-    });
-    await prisma.taxonomyTopic.update({
-      where: { slug: 'product' },
-      data: { label: 'Product' },
-    });
+    try {
+      await ensureOnboardingTaxonomy(prisma, true);
+      await expect(
+        prisma.taxonomyTopic.findUniqueOrThrow({ where: { slug: 'product' } }),
+      ).resolves.toMatchObject({
+        id: product.id,
+        label: 'Product (admin edited)',
+      });
+    } finally {
+      await prisma.taxonomyTopic.update({
+        where: { slug: 'product' },
+        data: { label: 'Product' },
+      });
+    }
   });
 
   it('does not create or change TaxonomyTopic rows on GET /me/profile', async () => {
@@ -567,89 +573,102 @@ describe('onboarding HTTP integration', { timeout: 30_000 }, () => {
       where: { id: merged },
       data: { mergedIntoId: first },
     });
-    const saved = await request('/v1/me/expertise', user.cookie, {
-      method: 'PUT',
-      body: JSON.stringify({
-        topicIds: [first],
-        customExpertise: 'Marketplace ops',
-      }),
-    });
-    expect(saved.status).toBe(200);
-    const replaced = await request('/v1/me/expertise', user.cookie, {
-      method: 'PUT',
-      body: JSON.stringify({ topicIds: [second] }),
-    });
-    expect(replaced.status).toBe(200);
-    const body = (await replaced.json()) as OnboardingProfileResponse;
-    expect(body.expertise.map((topic) => topic.slug)).toEqual(['product']);
-    expect(body.profile.customExpertise).toBeNull();
-    expect(
-      (
-        await request('/v1/me/expertise', user.cookie, {
-          method: 'PUT',
-          body: JSON.stringify({ topicIds: [inactive] }),
-        })
-      ).status,
-    ).toBe(400);
-    expect(
-      (
-        await request('/v1/me/expertise', user.cookie, {
-          method: 'PUT',
-          body: JSON.stringify({ topicIds: [merged] }),
-        })
-      ).status,
-    ).toBe(400);
-    expect(
-      (
-        await request('/v1/me/expertise', user.cookie, {
-          method: 'PUT',
-          body: JSON.stringify({ topicIds: ['missing-topic'] }),
-        })
-      ).status,
-    ).toBe(400);
-    expect(
-      await prisma.founderExpertise.findMany({
-        where: { profile: { userId: user.id } },
-      }),
-    ).toHaveLength(1);
-    const stored = await prisma.founderExpertise.findMany({
-      where: { profile: { userId: user.id } },
-      select: { topicId: true },
-    });
-    await prisma.taxonomyTopic.update({
-      where: { id: inactive },
-      data: { isActive: true },
-    });
-    await prisma.taxonomyTopic.update({
-      where: { id: merged },
-      data: { mergedIntoId: null },
-    });
-    await prisma.taxonomyTopic.update({
-      where: { id: second },
-      data: { isActive: false },
-    });
-    const readable = (await (
-      await request('/v1/me/profile', user.cookie)
-    ).json()) as OnboardingProfileResponse;
-    expect(readable.expertise.map((topic) => topic.slug)).toEqual(['product']);
-    expect(
-      (
-        await request('/v1/me/expertise', user.cookie, {
-          method: 'PUT',
-          body: JSON.stringify({ topicIds: [second] }),
-        })
-      ).status,
-    ).toBe(400);
-    expect(
-      await prisma.founderExpertise.findMany({
+    try {
+      const saved = await request('/v1/me/expertise', user.cookie, {
+        method: 'PUT',
+        body: JSON.stringify({
+          topicIds: [first],
+          customExpertise: 'Marketplace ops',
+        }),
+      });
+      expect(saved.status).toBe(200);
+      const replaced = await request('/v1/me/expertise', user.cookie, {
+        method: 'PUT',
+        body: JSON.stringify({ topicIds: [second] }),
+      });
+      expect(replaced.status).toBe(200);
+      const body = (await replaced.json()) as OnboardingProfileResponse;
+      expect(body.expertise.map((topic) => topic.slug)).toEqual(['product']);
+      expect(body.profile.customExpertise).toBeNull();
+      expect(
+        (
+          await request('/v1/me/expertise', user.cookie, {
+            method: 'PUT',
+            body: JSON.stringify({ topicIds: [inactive] }),
+          })
+        ).status,
+      ).toBe(400);
+      expect(
+        (
+          await request('/v1/me/expertise', user.cookie, {
+            method: 'PUT',
+            body: JSON.stringify({ topicIds: [merged] }),
+          })
+        ).status,
+      ).toBe(400);
+      expect(
+        (
+          await request('/v1/me/expertise', user.cookie, {
+            method: 'PUT',
+            body: JSON.stringify({ topicIds: ['missing-topic'] }),
+          })
+        ).status,
+      ).toBe(400);
+      expect(
+        await prisma.founderExpertise.findMany({
+          where: { profile: { userId: user.id } },
+        }),
+      ).toHaveLength(1);
+      const stored = await prisma.founderExpertise.findMany({
         where: { profile: { userId: user.id } },
         select: { topicId: true },
-      }),
-    ).toEqual(stored);
-    await prisma.taxonomyTopic.update({
-      where: { id: second },
-      data: { isActive: true },
-    });
+      });
+      await prisma.taxonomyTopic.update({
+        where: { id: inactive },
+        data: { isActive: true },
+      });
+      await prisma.taxonomyTopic.update({
+        where: { id: merged },
+        data: { mergedIntoId: null },
+      });
+      await prisma.taxonomyTopic.update({
+        where: { id: second },
+        data: { isActive: false },
+      });
+      const readable = (await (
+        await request('/v1/me/profile', user.cookie)
+      ).json()) as OnboardingProfileResponse;
+      expect(readable.expertise.map((topic) => topic.slug)).toEqual([
+        'product',
+      ]);
+      expect(
+        (
+          await request('/v1/me/expertise', user.cookie, {
+            method: 'PUT',
+            body: JSON.stringify({ topicIds: [second] }),
+          })
+        ).status,
+      ).toBe(400);
+      expect(
+        await prisma.founderExpertise.findMany({
+          where: { profile: { userId: user.id } },
+          select: { topicId: true },
+        }),
+      ).toEqual(stored);
+    } finally {
+      await prisma.taxonomyTopic.update({
+        where: { id: inactive },
+        data: { isActive: true },
+      });
+      await prisma.taxonomyTopic.update({
+        where: { id: merged },
+        data: { mergedIntoId: null },
+      });
+      await prisma.taxonomyTopic.update({
+        where: { id: second },
+        data: { isActive: true },
+      });
+    }
   });
 
   it('replaces expertise concurrently without duplicate joins', async () => {

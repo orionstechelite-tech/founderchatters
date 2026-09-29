@@ -376,3 +376,100 @@ export type OnboardingCompleteResponse = {
   completed: true;
   onboardingCompletedAt: string;
 };
+
+export const FOUNDER_ERROR_CODES = {
+  notFound: 'FOUNDER_NOT_FOUND',
+  invalidSave: 'FOUNDER_INVALID_SAVE',
+  invalidQuery: 'FOUNDER_INVALID_QUERY',
+} as const;
+
+export type FounderErrorCode =
+  (typeof FOUNDER_ERROR_CODES)[keyof typeof FOUNDER_ERROR_CODES];
+
+export const DISCOVER_LIMITS = {
+  queryMax: 100,
+  pageSizeDefault: 20,
+  pageSizeMax: 50,
+  pageMax: 10_000,
+} as const;
+
+export type MemberTopicRef = {
+  id: string;
+  slug: string;
+  label: string;
+};
+
+export type MemberCompanySummary = {
+  name: string;
+  website: string | null;
+  description: string | null;
+  stage: string | null;
+  industry: string | null;
+  city: string | null;
+  country: string | null;
+};
+
+export type DiscoverFounder = {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+  city: string | null;
+  country: string | null;
+  companyName: string;
+  industry: string | null;
+  stage: string | null;
+  expertise: MemberTopicRef[];
+  customExpertise: string | null;
+  savedByMe: boolean;
+};
+
+export type DiscoverFoundersResponse = {
+  founders: DiscoverFounder[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  savedCount: number;
+  q: string | null;
+  country: string | null;
+  industry: string | null;
+  stage: string | null;
+  expertiseTopicId: string | null;
+  saved: boolean | null;
+  expertiseTopics: MemberTopicRef[];
+};
+
+export type MemberFounderProfile = {
+  id: string;
+  displayName: string;
+  headline: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+  city: string | null;
+  country: string | null;
+  company: MemberCompanySummary;
+  expertise: MemberTopicRef[];
+  customExpertise: string | null;
+  currentNeedText: string | null;
+  needs: MemberTopicRef[];
+  savedByMe: boolean;
+  memberSinceYear: number | null;
+  isSelf: boolean;
+};
+
+export type MemberFounderProfileResponse = {
+  founder: MemberFounderProfile;
+};
+
+export type SavedFoundersResponse = {
+  founders: DiscoverFounder[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export type SavedFounderMutationResponse = {
+  saved: boolean;
+  savedCount: number;
+};

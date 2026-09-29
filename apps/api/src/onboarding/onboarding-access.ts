@@ -70,3 +70,15 @@ export function assertActiveMember(principal: AuthPrincipal): void {
     );
   }
 }
+
+export async function requireActiveMember(
+  request: Request,
+  sessions: SessionService,
+  config: AppConfig,
+): Promise<AuthPrincipal> {
+  const principal = await sessions.authenticate(
+    readSessionCookie(request, config.sessionCookieName),
+  );
+  assertActiveMember(principal);
+  return principal;
+}

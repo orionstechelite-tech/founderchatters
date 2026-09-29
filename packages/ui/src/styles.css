@@ -72,6 +72,9 @@
 .fc-member-menu:focus-visible,
 .fc-member-nav-item:focus-visible,
 .fc-mobile-nav-item:focus-visible,
+.fc-filter-sheet button:focus-visible,
+.fc-filter-sheet input:focus-visible,
+.fc-filter-sheet select:focus-visible,
 .fc-marketing-shell a:focus-visible,
 .fc-admin-shell a:focus-visible,
 .fc-mobile-menu:focus-visible {
@@ -233,7 +236,14 @@ textarea.fc-field__control {
   box-shadow: inset 0 -3px var(--fc-color-accent);
   color: var(--fc-color-text);
 }
+.fc-member-nav-item[aria-disabled='true'] {
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .fc-member-topbar__actions {
+  align-items: center;
+  display: flex;
+  gap: 12px;
   margin-left: auto;
 }
 .fc-member-menu,
@@ -513,6 +523,9 @@ textarea.fc-field__control {
   }
   .fc-member-nav-item[data-nav-item='profile'] {
     display: flex;
+  }
+  .fc-member-topbar__actions .fc-avatar {
+    display: none;
   }
   .fc-member-shell__content {
     padding: var(--fc-space-6);

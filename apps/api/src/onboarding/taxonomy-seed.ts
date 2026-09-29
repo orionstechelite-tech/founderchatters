@@ -23,7 +23,10 @@ export async function ensureOnboardingTaxonomy(
   for (const topic of ONBOARDING_TAXONOMY_TOPICS as readonly OnboardingTopic[]) {
     await prisma.taxonomyTopic.upsert({
       where: { slug: topic.slug },
-      update: {},
+      update: {
+        isActive: true,
+        mergedIntoId: null,
+      },
       create: {
         slug: topic.slug,
         label: topic.label,

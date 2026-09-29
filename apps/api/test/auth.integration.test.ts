@@ -93,16 +93,19 @@ describe('auth/session HTTP integration', () => {
   }, 30_000);
 
   afterAll(async () => {
-    if (userId) {
-      await prisma.user.deleteMany({ where: { id: userId } });
+    try {
+      if (userId) {
+        await prisma.user.deleteMany({ where: { id: userId } });
+      }
+      if (recoveryUserId) {
+        await prisma.auditLog.deleteMany({
+          where: { targetType: 'User', targetId: recoveryUserId },
+        });
+        await prisma.user.deleteMany({ where: { id: recoveryUserId } });
+      }
+    } finally {
+      await app.close();
     }
-    if (recoveryUserId) {
-      await prisma.auditLog.deleteMany({
-        where: { targetType: 'User', targetId: recoveryUserId },
-      });
-      await prisma.user.deleteMany({ where: { id: recoveryUserId } });
-    }
-    await app.close();
   });
 
   it('rejects an untrusted mutation origin with the standard error body', async () => {

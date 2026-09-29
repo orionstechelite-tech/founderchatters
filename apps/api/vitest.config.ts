@@ -7,5 +7,9 @@ export default defineConfig({
   test: {
     hookTimeout: 60_000,
     testTimeout: 15_000,
+    // Integration files share one Postgres/Redis. Parallel Nest apps contend
+    // on taxonomy rows and connection pools; serialize files instead of
+    // force-exiting or inflating timeouts.
+    fileParallelism: false,
   },
 });
