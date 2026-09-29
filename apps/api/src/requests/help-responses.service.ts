@@ -124,6 +124,13 @@ export class HelpResponsesService {
         );
       }
     }
+    const conversationByHelper = await this.privateChatConversations(
+      id,
+      callerId,
+      request!.authorId,
+      isOwner,
+      rows,
+    );
     return {
       responses: rows.map((row) =>
         this.toMemberResponse(
@@ -131,6 +138,7 @@ export class HelpResponsesService {
           callerId,
           isOwner,
           helperBlocked.get(row.authorId) ?? false,
+          conversationByHelper.get(row.authorId) ?? null,
         ),
       ),
       page: parsed.page,
@@ -277,7 +285,7 @@ export class HelpResponsesService {
       });
     });
     return {
-      response: this.toMemberResponse(stored, callerId, false, false),
+      response: this.toMemberResponse(stored, callerId, false, false, null),
     };
   }
 
@@ -401,6 +409,7 @@ export class HelpResponsesService {
         callerId,
         Boolean(isOwner),
         blocked,
+        null,
       ),
     };
   }
@@ -490,13 +499,48 @@ export class HelpResponsesService {
     return Boolean(row);
   }
 
+  private async privateChatConversations(
+    requestId: string,
+    callerId: string,
+    requesterId: string,
+    isOwner: boolean,
+    rows: StoredResponse[],
+  ): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    const needsMeta = rows.some(
+      (row) =>
+        row.type === RESPONSE_TYPES.privateChatOffer &&
+        (isOwner || row.authorId === callerId),
+    );
+    if (!needsMeta) return map;
+    const conversations = await this.prisma.conversation.findMany({
+      where: {
+        requestId,
+        participants: { some: { userId: callerId } },
+      },
+      include: { participants: { select: { userId: true } } },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    for (const conversation of conversations) {
+      const ids = conversation.participants.map((row) => row.userId);
+      if (ids.length !== 2 || !ids.includes(requesterId)) continue;
+      const helperId = ids.find((id) => id !== requesterId);
+      if (helperId && !map.has(helperId)) {
+        map.set(helperId, conversation.id);
+      }
+    }
+    return map;
+  }
+
   private toMemberResponse(
     row: StoredResponse,
     callerId: string,
     isRequestOwner: boolean,
     blocked: boolean,
+    conversationId: string | null,
   ): MemberHelpResponse {
     const isHelper = row.authorId === callerId;
+    const roleSafe = isRequestOwner || isHelper;
     return {
       id: row.id,
       type: row.type,
@@ -504,6 +548,14 @@ export class HelpResponsesService {
       author: this.toAuthor(row.author),
       body: row.type === RESPONSE_TYPES.advice ? (row.body ?? '') : null,
       introduction: this.toIntroduction(row, isRequestOwner, isHelper, blocked),
+      privateChat:
+        row.type === RESPONSE_TYPES.privateChatOffer && roleSafe
+          ? {
+              conversationId,
+              canStart: isRequestOwner && conversationId === null,
+              canOpen: conversationId !== null,
+            }
+          : null,
     };
   }
 

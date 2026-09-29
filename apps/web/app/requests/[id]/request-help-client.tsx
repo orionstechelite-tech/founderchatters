@@ -11,6 +11,7 @@ import {
   RESPONSE_TYPES,
 } from '@founderchatters/contracts';
 import { Button, Field } from '@founderchatters/ui';
+import { useRouter } from 'next/navigation';
 import { useEffect, useId, useRef, useState } from 'react';
 
 import { OnboardingApiError } from '../../onboarding/onboarding-api';
@@ -18,6 +19,7 @@ import {
   cancelIntroduction,
   consentIntroduction,
   createAdviceResponse,
+  createConversation,
   createIntroductionResponse,
   createPrivateChatResponse,
   declineIntroduction,
@@ -47,6 +49,7 @@ export function RequestHelpThread({
   request: MemberRequest;
   isOwner: boolean;
 }) {
+  const router = useRouter();
   const chooserTitleId = useId();
   const adviceTitleId = useId();
   const introTitleId = useId();
@@ -238,6 +241,26 @@ export function RequestHelpThread({
     }
   }
 
+  async function startPrivateChat(responseId: string) {
+    if (inflight.current) return;
+    inflight.current = true;
+    setBusy(true);
+    try {
+      const payload = await createConversation(responseId);
+      setError(null);
+      router.push(`/messages/${payload.conversation.id}`);
+    } catch (cause: unknown) {
+      setError(
+        cause instanceof OnboardingApiError
+          ? cause.message
+          : 'We could not start that conversation.',
+      );
+    } finally {
+      inflight.current = false;
+      setBusy(false);
+    }
+  }
+
   const responses = thread?.responses ?? [];
   const count = thread?.total ?? 0;
   const threadReady = thread !== null || error !== null;
@@ -319,6 +342,33 @@ export function RequestHelpThread({
                       ) : null}
                     </div>
                   </>
+                ) : null}
+                {response.type === RESPONSE_TYPES.privateChatOffer &&
+                response.privateChat ? (
+                  <div className="fc-help-card__actions">
+                    {response.privateChat.canStart ? (
+                      <Button
+                        disabled={busy}
+                        onClick={() => void startPrivateChat(response.id)}
+                        type="button"
+                      >
+                        Start private chat
+                      </Button>
+                    ) : null}
+                    {response.privateChat.canOpen &&
+                    response.privateChat.conversationId ? (
+                      <Button
+                        onClick={() =>
+                          router.push(
+                            `/messages/${response.privateChat!.conversationId}`,
+                          )
+                        }
+                        type="button"
+                      >
+                        Open private chat
+                      </Button>
+                    ) : null}
+                  </div>
                 ) : null}
               </li>
             );

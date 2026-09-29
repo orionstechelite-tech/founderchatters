@@ -332,7 +332,7 @@ describe('FC-010 discover', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('keeps Home, Discover, Ask, and Profile navigable and disables Messages', async () => {
+  it('keeps Home, Discover, Ask, and Profile navigable and enables Messages', async () => {
     mockApi();
     await renderDiscover();
     const nav = screen.getByRole('navigation', { name: 'Member navigation' });
@@ -353,14 +353,12 @@ describe('FC-010 discover', () => {
       '/founders/user-self',
     );
     expect(within(nav).getByRole('link', { name: 'Messages' })).toHaveAttribute(
-      'aria-disabled',
-      'true',
+      'href',
+      '/messages',
     );
-    const messages = within(nav).getByRole('link', { name: 'Messages' });
-    expect(messages.tagName).toBe('SPAN');
-    expect(messages.getAttribute('href')).toBeNull();
-    expect(nav.querySelector('a[href="/messages"]')).toBeNull();
-    expect(nav.querySelector('a[href="#messages"]')).toBeNull();
+    expect(
+      within(nav).getByRole('link', { name: 'Messages' }),
+    ).not.toHaveAttribute('aria-disabled', 'true');
     expect(
       screen.getByRole('link', { name: 'Open your profile' }),
     ).toHaveAttribute('href', '/founders/user-self');

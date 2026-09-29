@@ -660,6 +660,12 @@ export type HelpResponseIntroduction = {
   canCancel: boolean;
 };
 
+export type HelpResponsePrivateChat = {
+  conversationId: string | null;
+  canStart: boolean;
+  canOpen: boolean;
+};
+
 export type MemberHelpResponse = {
   id: string;
   type: ResponseType;
@@ -667,6 +673,7 @@ export type MemberHelpResponse = {
   author: MemberRequestAuthor | null;
   body: string | null;
   introduction: HelpResponseIntroduction | null;
+  privateChat: HelpResponsePrivateChat | null;
 };
 
 export type MemberHelpResponsesResponse = {
@@ -681,4 +688,122 @@ export type MemberHelpResponsesResponse = {
 
 export type HelpResponseMutationResponse = {
   response: MemberHelpResponse;
+};
+
+export const CONVERSATION_STATUSES = {
+  active: 'ACTIVE',
+  closed: 'CLOSED',
+} as const;
+
+export type ConversationStatus =
+  (typeof CONVERSATION_STATUSES)[keyof typeof CONVERSATION_STATUSES];
+
+export const MESSAGING_ERROR_CODES = {
+  conversationNotFound: 'CONVERSATION_NOT_FOUND',
+  invalidInput: 'MESSAGING_INVALID_INPUT',
+  notAllowed: 'MESSAGING_NOT_ALLOWED',
+  invalidState: 'MESSAGING_INVALID_STATE',
+  idempotencyConflict: 'MESSAGING_IDEMPOTENCY_CONFLICT',
+  rateLimited: 'MESSAGING_RATE_LIMITED',
+} as const;
+
+export type MessagingErrorCode =
+  (typeof MESSAGING_ERROR_CODES)[keyof typeof MESSAGING_ERROR_CODES];
+
+export const MESSAGING_LIMITS = {
+  bodyMin: 1,
+  bodyMax: 4000,
+  searchMax: 100,
+  pageSizeDefault: 20,
+  pageSizeMax: 50,
+  pageMax: 10_000,
+  historyLimitDefault: 50,
+  historyLimitMax: 100,
+  sendPerWindow: 30,
+  sendWindowSeconds: 60,
+} as const;
+
+export type CreateConversationBody = {
+  privateChatOfferResponseId: string;
+};
+
+export type SendMessageBody = {
+  clientMessageId: string;
+  body: string;
+};
+
+export type MemberMessagingCounterpart = {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+  companyName: string;
+  city: string | null;
+  country: string | null;
+};
+
+export type ConversationRequestContext =
+  | {
+      available: true;
+      id: string;
+      type: RequestType;
+      status: MemberRequestListStatus;
+      headline: string;
+      topics: MemberTopicRef[];
+    }
+  | {
+      available: false;
+    };
+
+export type ConversationLatestMessage = {
+  id: string;
+  senderIsViewer: boolean;
+  body: string;
+  createdAt: string;
+};
+
+export type MemberConversationSummary = {
+  id: string;
+  status: ConversationStatus;
+  updatedAt: string;
+  counterpart: MemberMessagingCounterpart | null;
+  requestContext: ConversationRequestContext;
+  latestMessage: ConversationLatestMessage | null;
+};
+
+export type MemberConversationsResponse = {
+  conversations: MemberConversationSummary[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  q: string | null;
+};
+
+export type MemberConversation = MemberConversationSummary & {
+  canSend: boolean;
+};
+
+export type MemberConversationResponse = {
+  conversation: MemberConversation;
+};
+
+export type ConversationCreatedResponse = {
+  conversation: MemberConversation;
+};
+
+export type MemberMessage = {
+  id: string;
+  senderId: string;
+  createdAt: string;
+  body: string | null;
+  removed: boolean;
+};
+
+export type MemberMessagesResponse = {
+  messages: MemberMessage[];
+  nextBefore: string | null;
+};
+
+export type MessageSentResponse = {
+  message: MemberMessage;
 };
