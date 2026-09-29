@@ -2112,7 +2112,7 @@ body {
 .fc-request-meta,
 .fc-request-context,
 .fc-request-help,
-.fc-request-responses p,
+.fc-request-responses > p,
 .fc-request-sidebar p {
   color: var(--fc-color-text-secondary);
   margin: 4px 0 0;
@@ -2139,8 +2139,181 @@ body {
 
 .fc-request-responses {
   border-top: 1px solid var(--fc-color-border);
+  display: grid;
+  gap: 16px;
   margin-top: 12px;
+  min-width: 0;
   padding-top: 18px;
+}
+
+.fc-request-responses > .fc-label {
+  margin: 0;
+}
+
+.fc-help-thread {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.fc-help-card {
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: var(--fc-radius-4);
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 16px;
+}
+
+.fc-help-card__title {
+  color: var(--fc-color-text);
+  font-weight: 600;
+  margin: 0;
+}
+
+.fc-help-card__body,
+.fc-request-responses .fc-help-card__body {
+  color: var(--fc-color-text-secondary);
+  margin: 0;
+}
+
+.fc-help-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fc-help-card__actions .fc-button {
+  min-height: 44px;
+}
+
+.fc-help-sheet {
+  max-height: min(90vh, 840px);
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+
+.fc-help-sheet__title {
+  font: 400 34px/1 var(--fc-font-serif);
+  margin: 0 0 12px;
+}
+
+.fc-help-sheet__lead {
+  color: var(--fc-color-text);
+  font: 600 20px/1.25 var(--fc-font-sans);
+  margin: 0 0 18px;
+}
+
+.fc-help-sheet__note {
+  color: var(--fc-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 16px 0;
+}
+
+.fc-help-options {
+  display: grid;
+  gap: 16px;
+}
+
+.fc-help-option {
+  align-items: start;
+  background: var(--fc-color-page);
+  border: 0;
+  border-radius: 18px;
+  color: var(--fc-color-text);
+  cursor: pointer;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 104px;
+  padding: 18px 16px;
+  text-align: left;
+  width: 100%;
+}
+
+.fc-help-option span:first-child {
+  font: 600 16px/1.25 var(--fc-font-sans);
+}
+
+.fc-help-option small {
+  color: var(--fc-color-text-secondary);
+  font: 400 11px/1.25 var(--fc-font-sans);
+  grid-column: 1;
+}
+
+.fc-help-option span:last-child {
+  align-self: center;
+  font-weight: 700;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.fc-help-option--intro {
+  background: var(--fc-color-blue);
+}
+
+.fc-help-option--private {
+  background: var(--fc-color-sand);
+}
+
+.fc-help-option:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.fc-help-option:focus-visible,
+.fc-help-consent:focus-within,
+.fc-help-sheet button:focus-visible {
+  outline: 3px solid var(--fc-color-blue);
+  outline-offset: 3px;
+}
+
+.fc-help-context {
+  background: var(--fc-color-page);
+  border-radius: var(--fc-radius-4);
+  display: grid;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding: 14px;
+}
+
+.fc-help-context p {
+  margin: 0;
+}
+
+.fc-help-context p:first-child {
+  color: var(--fc-color-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.fc-help-context p:last-child {
+  color: var(--fc-color-text-secondary);
+  font-size: 10px;
+}
+
+.fc-help-consent {
+  align-items: center;
+  background: var(--fc-color-subtle);
+  border-radius: 14px;
+  display: flex;
+  font-size: 12px;
+  font-weight: 500;
+  gap: 10px;
+  min-height: 52px;
+  padding: 12px 14px;
+}
+
+.fc-help-consent input {
+  height: 18px;
+  margin: 0;
+  width: 18px;
 }
 
 .fc-request-actions .fc-button {
@@ -2195,5 +2368,20 @@ body {
 
   .fc-ask-hero h1 {
     font-size: 34px;
+  }
+
+  .fc-help-sheet,
+  .fc-help-option,
+  .fc-help-card,
+  .fc-request-detail {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .fc-help-option,
+  .fc-help-card__actions .fc-button,
+  .fc-help-sheet .fc-button,
+  .fc-help-consent {
+    min-height: 44px;
   }
 }

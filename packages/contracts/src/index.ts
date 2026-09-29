@@ -599,3 +599,86 @@ export type OwnRequestsResponse = {
 export type RequestDeletedResponse = {
   deleted: true;
 };
+
+export const RESPONSE_TYPES = {
+  advice: 'ADVICE',
+  introductionOffer: 'INTRODUCTION_OFFER',
+  privateChatOffer: 'PRIVATE_CHAT_OFFER',
+} as const;
+
+export type ResponseType = (typeof RESPONSE_TYPES)[keyof typeof RESPONSE_TYPES];
+
+export const INTRODUCTION_STATUSES = {
+  offered: 'OFFERED',
+  consentPending: 'CONSENT_PENDING',
+  introduced: 'INTRODUCED',
+  declined: 'DECLINED',
+  cancelled: 'CANCELLED',
+} as const;
+
+export type IntroductionStatus =
+  (typeof INTRODUCTION_STATUSES)[keyof typeof INTRODUCTION_STATUSES];
+
+export const HELP_RESPONSE_ERROR_CODES = {
+  invalidInput: 'HELP_RESPONSE_INVALID_INPUT',
+  notAllowed: 'HELP_RESPONSE_NOT_ALLOWED',
+  introductionNotFound: 'INTRODUCTION_NOT_FOUND',
+  introductionInvalidState: 'INTRODUCTION_INVALID_STATE',
+} as const;
+
+export type HelpResponseErrorCode =
+  (typeof HELP_RESPONSE_ERROR_CODES)[keyof typeof HELP_RESPONSE_ERROR_CODES];
+
+export const HELP_RESPONSE_LIMITS = {
+  adviceMin: 20,
+  adviceMax: 2000,
+  personNameMin: 2,
+  personNameMax: 160,
+  reasonMax: 500,
+  pageSizeDefault: 20,
+  pageSizeMax: 50,
+  pageMax: 10_000,
+} as const;
+
+export type CreateAdviceBody = {
+  body: string;
+};
+
+export type CreateIntroductionBody = {
+  personName: string;
+  reason?: string | null;
+  permissionConfirmed: true;
+};
+
+export type HelpResponseIntroduction = {
+  id: string;
+  status: IntroductionStatus;
+  personName: string | null;
+  reason: string | null;
+  canConsent: boolean;
+  canDecline: boolean;
+  canCancel: boolean;
+};
+
+export type MemberHelpResponse = {
+  id: string;
+  type: ResponseType;
+  createdAt: string;
+  author: MemberRequestAuthor | null;
+  body: string | null;
+  introduction: HelpResponseIntroduction | null;
+};
+
+export type MemberHelpResponsesResponse = {
+  responses: MemberHelpResponse[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  viewerResponseTypes: ResponseType[];
+  canOfferHelp: boolean;
+};
+
+export type HelpResponseMutationResponse = {
+  response: MemberHelpResponse;
+};

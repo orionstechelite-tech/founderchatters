@@ -13,10 +13,11 @@ import {
   type RequestUrgency,
   type UpsertRequestBody,
 } from '@founderchatters/contracts';
-import { Prisma } from '../../../../generated/prisma/client.js';
+import type { Prisma } from '../../../../generated/prisma/client.js';
 
 import { PrismaService } from '../database/prisma.service.js';
 import { ApiError } from '../http/api-error.js';
+import { lockRequest, lockUser, withRequestRowRetry } from './request-locks.js';
 import {
   assertDraftBounds,
   assertPublishRequirements,
@@ -29,8 +30,6 @@ import {
   parseRequestId,
   requestNotFound,
 } from './requests-query.js';
-
-const SERIALIZABLE_MAX_ATTEMPTS = 8;
 
 const activeTopic = {
   isActive: true,
@@ -173,8 +172,8 @@ export class RequestsService {
       whoCouldHelp: parsed.whoCouldHelp ?? null,
       topicIds: parsed.topicIds ?? [],
     });
-    const created = await this.withSerializableRetry(async (tx) => {
-      await this.lockUser(tx, callerId);
+    const created = await withRequestRowRetry(this.prisma, async (tx) => {
+      await lockUser(tx, callerId);
       const existing = await tx.request.findFirst({
         where: { authorId: callerId, status: REQUEST_STATUSES.draft },
         select: { id: true },
@@ -217,7 +216,7 @@ export class RequestsService {
   ): Promise<MemberRequestResponse> {
     const id = parseRequestId(rawId);
     const parsed = parsePatchBody(body);
-    const updated = await this.withSerializableRetry(async (tx) => {
+    const updated = await withRequestRowRetry(this.prisma, async (tx) => {
       const current = await this.loadOwnedForMutation(tx, callerId, id);
       if (!this.isMemberVisible(current, true)) {
         throw requestNotFound();
@@ -268,7 +267,7 @@ export class RequestsService {
   ): Promise<MemberRequestResponse> {
     parseEmptyMutationBody(body);
     const id = parseRequestId(rawId);
-    const published = await this.withSerializableRetry(async (tx) => {
+    const published = await withRequestRowRetry(this.prisma, async (tx) => {
       const current = await this.loadOwnedForMutation(tx, callerId, id);
       if (
         current.status === REQUEST_STATUSES.deletedByAuthor ||
@@ -319,7 +318,7 @@ export class RequestsService {
   ): Promise<MemberRequestResponse> {
     parseEmptyMutationBody(body);
     const id = parseRequestId(rawId);
-    const resolved = await this.withSerializableRetry(async (tx) => {
+    const resolved = await withRequestRowRetry(this.prisma, async (tx) => {
       const current = await this.loadOwnedForMutation(tx, callerId, id);
       if (
         current.status === REQUEST_STATUSES.deletedByAuthor ||
@@ -352,7 +351,7 @@ export class RequestsService {
   ): Promise<RequestDeletedResponse> {
     parseEmptyMutationBody(body);
     const id = parseRequestId(rawId);
-    await this.withSerializableRetry(async (tx) => {
+    await withRequestRowRetry(this.prisma, async (tx) => {
       const current = await this.loadOwnedForMutation(tx, callerId, id);
       if (current.status === REQUEST_STATUSES.moderatedRemoved) {
         throw requestNotFound();
@@ -477,7 +476,7 @@ export class RequestsService {
     callerId: string,
     id: string,
   ): Promise<StoredRequest> {
-    await this.lockUser(tx, callerId);
+    await lockUser(tx, callerId);
     const existing = await tx.request.findUnique({
       where: { id },
       select: { id: true, authorId: true },
@@ -485,75 +484,13 @@ export class RequestsService {
     if (!existing || existing.authorId !== callerId) {
       throw requestNotFound();
     }
-    await this.lockRequest(tx, existing.id);
+    await lockRequest(tx, existing.id);
     const current = await tx.request.findUnique({
       where: { id: existing.id },
       include: requestInclude,
     });
     if (!current) throw requestNotFound();
     return current;
-  }
-
-  private async lockUser(
-    tx: Prisma.TransactionClient,
-    userId: string,
-  ): Promise<void> {
-    await tx.$queryRaw`
-      SELECT id FROM "User" WHERE id = ${userId} FOR UPDATE
-    `;
-  }
-
-  private async lockRequest(
-    tx: Prisma.TransactionClient,
-    requestId: string,
-  ): Promise<void> {
-    await tx.$queryRaw`
-      SELECT id FROM "Request" WHERE id = ${requestId} FOR UPDATE
-    `;
-  }
-
-  private async withSerializableRetry<T>(
-    operation: (tx: Prisma.TransactionClient) => Promise<T>,
-  ): Promise<T> {
-    for (let attempt = 1; attempt <= SERIALIZABLE_MAX_ATTEMPTS; attempt += 1) {
-      try {
-        return await this.prisma.$transaction(operation, {
-          isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
-        });
-      } catch (error) {
-        if (error instanceof ApiError) throw error;
-        const conflict = this.isTransactionConflict(error);
-        if (conflict && attempt < SERIALIZABLE_MAX_ATTEMPTS) {
-          continue;
-        }
-        if (conflict) {
-          throw new ApiError(
-            REQUEST_ERROR_CODES.publishFailed,
-            'We could not complete that request. Please try again.',
-            HttpStatus.CONFLICT,
-          );
-        }
-        throw error;
-      }
-    }
-    throw new ApiError(
-      REQUEST_ERROR_CODES.publishFailed,
-      'We could not complete that request. Please try again.',
-      HttpStatus.CONFLICT,
-    );
-  }
-
-  private isTransactionConflict(error: unknown): boolean {
-    if (typeof error !== 'object' || error === null) return false;
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2034'
-    ) {
-      return true;
-    }
-    if ('code' in error && error.code === 'P2034') return true;
-    const message = 'message' in error ? String(error.message) : '';
-    return /could not serialize|write conflict|deadlock/i.test(message);
   }
 
   private isMemberVisible(row: StoredRequest, isOwner: boolean): boolean {
