@@ -28,7 +28,10 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-import type { MemberRequest } from '@founderchatters/contracts';
+import type {
+  MemberHelpResponsesResponse,
+  MemberRequest,
+} from '@founderchatters/contracts';
 import { MemberAppShell } from '../../member/member-app-shell';
 import { initialsFrom, memberRequestUrl } from '../../member/member-format';
 import { RequestDetailClient } from './request-detail-client';
@@ -97,7 +100,19 @@ function response(body: unknown, status = 200): Response {
   });
 }
 
-function mockApi(request = ownerRequest) {
+function emptyThread(canOfferHelp = false): MemberHelpResponsesResponse {
+  return {
+    responses: [],
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    totalPages: 1,
+    viewerResponseTypes: [],
+    canOfferHelp,
+  };
+}
+
+function mockApi(request = ownerRequest, thread = emptyThread()) {
   const fetchMock = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
@@ -118,6 +133,9 @@ function mockApi(request = ownerRequest) {
           request: { ...request, headline: 'Updated published headline' },
         });
       }
+      if (url.includes('/responses')) {
+        return response(thread);
+      }
       if (url.includes('/v1/requests/req-live')) {
         return response({ request });
       }
@@ -128,14 +146,20 @@ function mockApi(request = ownerRequest) {
   return fetchMock;
 }
 
-async function renderDetail(request = ownerRequest, viewerId = 'user-self') {
-  mockApi(request);
+async function renderDetail(
+  request = ownerRequest,
+  viewerId = 'user-self',
+  thread = emptyThread(
+    viewerId !== request.author.id && request.status === 'PUBLISHED',
+  ),
+) {
+  mockApi(request, thread);
   const page = render(
     <MemberAppShell activeItem="Ask">
       <RequestDetailClient requestId="req-live" viewerId={viewerId} />
     </MemberAppShell>,
   );
-  await screen.findByText(request.headline);
+  await screen.findByRole('heading', { name: request.headline });
   return page;
 }
 
@@ -175,7 +199,7 @@ describe('FC-011 request detail', () => {
       screen.getByRole('button', { name: 'Delete request' }),
     ).toBeVisible();
     expect(screen.getByText(/Responses · 0/i)).toBeVisible();
-    expect(screen.getByText(/No responses yet/i)).toBeVisible();
+    expect(await screen.findByText(/No responses yet/i)).toBeVisible();
     expect(
       screen.queryByRole('button', { name: 'I can help' }),
     ).not.toBeInTheDocument();
@@ -185,18 +209,55 @@ describe('FC-011 request detail', () => {
     await expectAccessible(container);
   });
 
-  it('hides edit once a response exists and shows the count only', async () => {
-    await renderDetail({ ...ownerRequest, responseCount: 2 });
+  it('hides edit once a response exists and shows the live thread', async () => {
+    await renderDetail({ ...ownerRequest, responseCount: 2 }, 'user-self', {
+      responses: [
+        {
+          id: 'res-1',
+          type: 'ADVICE',
+          createdAt: '2026-01-02T00:00:00.000Z',
+          author: {
+            id: 'user-helper',
+            displayName: 'Chaitanya',
+            avatarUrl: null,
+            companyName: 'Northwind',
+            city: 'Dubai',
+            country: 'UAE',
+          },
+          body: 'Don’t start with a broad distributor. Validate access first.',
+          introduction: null,
+        },
+        {
+          id: 'res-2',
+          type: 'PRIVATE_CHAT_OFFER',
+          createdAt: '2026-01-02T01:00:00.000Z',
+          author: {
+            id: 'user-helper-2',
+            displayName: 'Maya',
+            avatarUrl: null,
+            companyName: 'Harbor',
+            city: 'Dubai',
+            country: 'UAE',
+          },
+          body: null,
+          introduction: null,
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 2,
+      totalPages: 1,
+      viewerResponseTypes: [],
+      canOfferHelp: false,
+    });
     expect(
       screen.queryByRole('button', { name: 'Edit request' }),
     ).not.toBeInTheDocument();
-    expect(screen.getByText(/Responses · 2/i)).toBeVisible();
+    expect(await screen.findByText(/Responses · 2/i)).toBeVisible();
+    expect(await screen.findByText('Chaitanya · Public advice')).toBeVisible();
     expect(
-      screen.queryByText(/Don’t start with a broad distributor/i),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/Chaitanya · Public advice/i),
-    ).not.toBeInTheDocument();
+      await screen.findByText('Maya · Private help offered'),
+    ).toBeVisible();
   });
 
   it('renders resolved owner state as read-only except share', async () => {
@@ -218,7 +279,7 @@ describe('FC-011 request detail', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('keeps non-owner detail read-only without deferred help actions', async () => {
+  it('keeps non-owner published detail without owner actions and shows I can help', async () => {
     await renderDetail(
       {
         ...ownerRequest,
@@ -230,8 +291,8 @@ describe('FC-011 request detail', () => {
       screen.queryByRole('button', { name: 'Edit request' }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'I can help' }),
-    ).not.toBeInTheDocument();
+      await screen.findByRole('button', { name: 'I can help' }),
+    ).toBeVisible();
     expect(
       screen.queryByRole('button', { name: 'Message' }),
     ).not.toBeInTheDocument();
@@ -289,5 +350,6 @@ describe('FC-011 request detail', () => {
     );
     expect(styles).toContain('.fc-request-detail');
     expect(styles).toContain('@media (max-width: 390px)');
+    expect(styles).toContain('.fc-help-option');
   });
 });

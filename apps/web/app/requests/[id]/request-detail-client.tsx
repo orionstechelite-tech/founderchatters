@@ -26,6 +26,7 @@ import {
   memberRequestUrl,
   requestAuthorMeta,
 } from '../../member/member-format';
+import { RequestHelpThread } from './request-help-client';
 
 export function RequestDetailClient({
   requestId,
@@ -339,21 +340,7 @@ export function RequestDetailClient({
             </>
           )}
 
-          <div className="fc-request-responses">
-            <p className="fc-label">Responses · {request.responseCount}</p>
-            {request.responseCount === 0 ? (
-              <p>
-                No responses yet. Relevant founders can share advice, offer an
-                introduction, or move the conversation private.
-              </p>
-            ) : (
-              <p>
-                {request.responseCount} help{' '}
-                {request.responseCount === 1 ? 'response is' : 'responses are'}{' '}
-                attached to this request.
-              </p>
-            )}
-          </div>
+          <RequestHelpThread isOwner={isOwner} request={request} />
         </article>
 
         <aside className="fc-request-sidebar">

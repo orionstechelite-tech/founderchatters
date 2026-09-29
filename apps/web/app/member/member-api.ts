@@ -1,6 +1,8 @@
 import type {
   DiscoverFoundersResponse,
+  HelpResponseMutationResponse,
   MemberFounderProfileResponse,
+  MemberHelpResponsesResponse,
   MemberRequestResponse,
   OwnRequestsResponse,
   RequestDeletedResponse,
@@ -129,6 +131,74 @@ export function deleteRequest(id: string): Promise<RequestDeletedResponse> {
   return onboardingRequest<RequestDeletedResponse>(
     `requests/${encodeURIComponent(id)}`,
     { method: 'DELETE' },
+  );
+}
+
+export function listRequestResponses(
+  id: string,
+): Promise<MemberHelpResponsesResponse> {
+  return onboardingRequest<MemberHelpResponsesResponse>(
+    `requests/${encodeURIComponent(id)}/responses`,
+  );
+}
+
+export function createAdviceResponse(
+  id: string,
+  body: string,
+): Promise<HelpResponseMutationResponse> {
+  return onboardingRequest<HelpResponseMutationResponse>(
+    `requests/${encodeURIComponent(id)}/responses/advice`,
+    { method: 'POST', body: JSON.stringify({ body }) },
+  );
+}
+
+export function createIntroductionResponse(
+  id: string,
+  input: {
+    personName: string;
+    reason: string;
+    permissionConfirmed: boolean;
+  },
+): Promise<HelpResponseMutationResponse> {
+  return onboardingRequest<HelpResponseMutationResponse>(
+    `requests/${encodeURIComponent(id)}/responses/introduction`,
+    { method: 'POST', body: JSON.stringify(input) },
+  );
+}
+
+export function createPrivateChatResponse(
+  id: string,
+): Promise<HelpResponseMutationResponse> {
+  return onboardingRequest<HelpResponseMutationResponse>(
+    `requests/${encodeURIComponent(id)}/responses/private-chat`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
+}
+
+export function consentIntroduction(
+  id: string,
+): Promise<HelpResponseMutationResponse> {
+  return onboardingRequest<HelpResponseMutationResponse>(
+    `introductions/${encodeURIComponent(id)}/consent`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
+}
+
+export function declineIntroduction(
+  id: string,
+): Promise<HelpResponseMutationResponse> {
+  return onboardingRequest<HelpResponseMutationResponse>(
+    `introductions/${encodeURIComponent(id)}/decline`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
+}
+
+export function cancelIntroduction(
+  id: string,
+): Promise<HelpResponseMutationResponse> {
+  return onboardingRequest<HelpResponseMutationResponse>(
+    `introductions/${encodeURIComponent(id)}/cancel`,
+    { method: 'POST', body: JSON.stringify({}) },
   );
 }
 
