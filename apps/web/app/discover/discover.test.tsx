@@ -332,7 +332,7 @@ describe('FC-010 discover', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('keeps Home, Discover, and Profile navigable and disables Ask and Messages', async () => {
+  it('keeps Home, Discover, Ask, and Profile navigable and disables Messages', async () => {
     mockApi();
     await renderDiscover();
     const nav = screen.getByRole('navigation', { name: 'Member navigation' });
@@ -344,34 +344,26 @@ describe('FC-010 discover', () => {
       'href',
       '/discover',
     );
+    expect(within(nav).getByRole('link', { name: 'Ask' })).toHaveAttribute(
+      'href',
+      '/ask',
+    );
     expect(within(nav).getByRole('link', { name: 'Profile' })).toHaveAttribute(
       'href',
       '/founders/user-self',
-    );
-    expect(within(nav).getByRole('link', { name: 'Ask' })).toHaveAttribute(
-      'aria-disabled',
-      'true',
     );
     expect(within(nav).getByRole('link', { name: 'Messages' })).toHaveAttribute(
       'aria-disabled',
       'true',
     );
-    const ask = within(nav).getByRole('link', { name: 'Ask' });
     const messages = within(nav).getByRole('link', { name: 'Messages' });
-    expect(ask.tagName).toBe('SPAN');
     expect(messages.tagName).toBe('SPAN');
-    expect(ask.getAttribute('href')).toBeNull();
     expect(messages.getAttribute('href')).toBeNull();
-    expect(nav.querySelector('a[href="/ask"]')).toBeNull();
     expect(nav.querySelector('a[href="/messages"]')).toBeNull();
-    expect(nav.querySelector('a[href="#ask"]')).toBeNull();
     expect(nav.querySelector('a[href="#messages"]')).toBeNull();
     expect(
       screen.getByRole('link', { name: 'Open your profile' }),
     ).toHaveAttribute('href', '/founders/user-self');
-    expect(
-      within(nav).queryByRole('link', { name: 'Ask' })?.getAttribute('href'),
-    ).toBeNull();
   });
 
   it('keeps the 390px stacked card contract', () => {

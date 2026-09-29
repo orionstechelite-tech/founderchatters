@@ -13,6 +13,7 @@ import { ApiExceptionFilter } from './http/api-exception.filter.js';
 import { FoundersModule } from './founders/founders.module.js';
 import { OnboardingModule } from './onboarding/onboarding.module.js';
 import { RequestIdMiddleware } from './http/request-id.middleware.js';
+import { RequestsModule } from './requests/requests.module.js';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { RequestIdMiddleware } from './http/request-id.middleware.js';
     AdminApplicationModule,
     OnboardingModule,
     FoundersModule,
+    RequestsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -66,3 +66,21 @@ export function profileMeta(founder: MemberFounderProfile): string | null {
   ].filter((value): value is string => Boolean(value?.trim()));
   return parts.length > 0 ? parts.join(' · ') : null;
 }
+
+export function requestAuthorMeta(author: {
+  companyName: string;
+  city: string | null;
+  country: string | null;
+}): string {
+  const location = formatLocation(author.city, author.country);
+  return [author.companyName.trim() || null, location]
+    .filter((value): value is string => Boolean(value))
+    .join(' · ');
+}
+
+export function memberRequestUrl(
+  requestId: string,
+  origin = typeof window === 'undefined' ? '' : window.location.origin,
+): string {
+  return `${origin}/requests/${requestId}`;
+}
