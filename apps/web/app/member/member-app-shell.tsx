@@ -14,7 +14,7 @@ export function memberNavItems(userId: string) {
     { href: '/home', label: 'Home' },
     { href: '/discover', label: 'Discover' },
     { href: '/ask', label: 'Ask' },
-    { href: '', label: 'Messages', disabled: true },
+    { href: '/messages', label: 'Messages' },
     { href: `/founders/${userId}`, label: 'Profile' },
   ];
 }
@@ -22,11 +22,14 @@ export function memberNavItems(userId: string) {
 function resolveActiveItem(
   pathname: string,
   userId: string,
-  fallback: 'Home' | 'Discover' | 'Profile' | 'Ask',
+  fallback: 'Home' | 'Discover' | 'Profile' | 'Ask' | 'Messages',
 ) {
   if (pathname === '/ask' || pathname.startsWith('/requests/')) return 'Ask';
   if (pathname === '/discover') return 'Discover';
   if (pathname === '/home') return 'Home';
+  if (pathname === '/messages' || pathname.startsWith('/messages/')) {
+    return 'Messages';
+  }
   if (pathname.startsWith('/founders/')) {
     return pathname === `/founders/${userId}` ? 'Profile' : '';
   }
@@ -37,7 +40,7 @@ export function MemberAppShell({
   activeItem,
   children,
 }: {
-  activeItem: 'Home' | 'Discover' | 'Profile' | 'Ask';
+  activeItem: 'Home' | 'Discover' | 'Profile' | 'Ask' | 'Messages';
   children: ReactNode;
 }) {
   const router = useRouter();

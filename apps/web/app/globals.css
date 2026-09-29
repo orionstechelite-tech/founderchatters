@@ -2385,3 +2385,328 @@ body {
     min-height: 44px;
   }
 }
+
+.fc-messages-hero h1 {
+  font: 400 48px/1 var(--fc-font-serif);
+  margin: 8px 0 12px;
+  max-width: 18ch;
+}
+
+.fc-messages-lead {
+  color: var(--fc-color-text-secondary);
+  font: 400 15px/1.25 var(--fc-font-sans);
+  margin: 0 0 28px;
+}
+
+.fc-messages-layout {
+  display: grid;
+  gap: 28px;
+  grid-template-columns: 380px minmax(0, 1fr);
+  min-width: 0;
+}
+
+.fc-messages-inbox,
+.fc-messages-detail {
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 20px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.fc-messages-inbox {
+  padding: 19px 0 16px;
+}
+
+.fc-messages-inbox > .fc-label {
+  margin: 0 19px 12px;
+}
+
+.fc-messages-search {
+  margin: 0 19px 16px;
+}
+
+.fc-messages-search input {
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 12px;
+  color: var(--fc-color-text);
+  font: 400 13px/1.25 var(--fc-font-sans);
+  min-height: 44px;
+  padding: 10px 13px;
+  width: 100%;
+}
+
+.fc-messages-search input:focus-visible,
+.fc-messages-composer textarea:focus-visible,
+.fc-messages-row:focus-visible,
+.fc-messages-back:focus-visible,
+.fc-messages-context a:focus-visible {
+  outline: 2px solid var(--fc-color-text);
+  outline-offset: 2px;
+}
+
+.fc-messages-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fc-messages-row {
+  color: inherit;
+  display: grid;
+  gap: 2px 12px;
+  grid-template-columns: 42px minmax(0, 1fr);
+  min-height: 104px;
+  padding: 16px 18px;
+  text-decoration: none;
+}
+
+.fc-messages-row--active {
+  background: var(--fc-color-subtle);
+  border-radius: 16px;
+}
+
+.fc-messages-avatar {
+  align-items: center;
+  background: var(--fc-color-sand);
+  border-radius: 50%;
+  display: inline-flex;
+  font: 700 12px var(--fc-font-sans);
+  grid-row: 1 / span 2;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+
+.fc-messages-row__name {
+  font: 600 14px/1.25 var(--fc-font-sans);
+}
+
+.fc-messages-row__meta,
+.fc-messages-row__preview,
+.fc-messages-header__meta {
+  color: var(--fc-color-text-secondary);
+}
+
+.fc-messages-row__meta {
+  font: 400 11px/1.25 var(--fc-font-sans);
+}
+
+.fc-messages-row__preview {
+  font: 400 12px/1.3 var(--fc-font-sans);
+  grid-column: 1 / -1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fc-messages-state,
+.fc-messages-empty-detail {
+  padding: 24px 19px;
+}
+
+.fc-messages-state h2,
+.fc-messages-empty-detail p {
+  font: 600 16px/1.35 var(--fc-font-sans);
+}
+
+.fc-messages-state p {
+  color: var(--fc-color-text-secondary);
+  font: 400 14px/1.45 var(--fc-font-sans);
+}
+
+.fc-messages-detail {
+  display: flex;
+  flex-direction: column;
+  min-height: 682px;
+  padding: 0 23px 18px;
+}
+
+.fc-messages-header {
+  align-items: center;
+  display: grid;
+  gap: 12px 16px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: 96px;
+  padding-top: 8px;
+}
+
+.fc-messages-back {
+  display: none;
+  font: 600 13px var(--fc-font-sans);
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.fc-messages-header__name {
+  font: 600 16px/1.25 var(--fc-font-sans);
+  margin: 0;
+}
+
+.fc-messages-header__meta {
+  font: 400 12px/1.25 var(--fc-font-sans);
+  margin: 0;
+}
+
+.fc-messages-context {
+  background: var(--fc-color-page);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+  padding: 14px;
+}
+
+.fc-messages-context p {
+  margin: 0;
+}
+
+.fc-messages-context a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.fc-messages-thread {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 20px;
+  list-style: none;
+  margin: 0 0 24px;
+  min-width: 0;
+  padding: 0;
+}
+
+.fc-messages-bubble {
+  align-self: start;
+  background: var(--fc-color-subtle);
+  border-radius: 16px;
+  max-width: min(600px, 100%);
+  padding: 14px 16px;
+}
+
+.fc-messages-bubble--mine {
+  align-self: end;
+  background: var(--fc-color-inverse);
+  color: var(--fc-color-text-inverse);
+}
+
+.fc-messages-bubble p {
+  font: 400 14px/1.4 var(--fc-font-sans);
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.fc-messages-bubble__label {
+  color: var(--fc-color-text-secondary);
+  font: 700 10px/1 var(--fc-font-sans) !important;
+  margin-bottom: 8px !important;
+}
+
+.fc-messages-bubble--mine .fc-messages-bubble__label {
+  color: var(--fc-color-accent);
+}
+
+.fc-messages-composer {
+  align-items: end;
+  border: 1px solid var(--fc-color-border);
+  border-radius: 16px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-top: auto;
+  min-height: 72px;
+  padding: 12px 16px;
+}
+
+.fc-messages-composer textarea {
+  background: transparent;
+  border: 0;
+  color: var(--fc-color-text);
+  font: 400 14px/1.4 var(--fc-font-sans);
+  min-height: 44px;
+  resize: none;
+  width: 100%;
+}
+
+.fc-messages-composer .fc-button,
+.fc-messages-header .fc-button,
+.fc-messages-state .fc-button {
+  min-height: 44px;
+}
+
+.fc-messages-unavailable {
+  color: var(--fc-color-text-secondary);
+  font: 400 14px/1.4 var(--fc-font-sans);
+  margin-top: auto;
+}
+
+@media (max-width: 1024px) {
+  .fc-messages-hero h1 {
+    font-size: 42px;
+  }
+
+  .fc-messages-layout {
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .fc-messages-hero h1 {
+    font-size: 34px;
+  }
+
+  .fc-messages-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fc-messages-layout[data-pane='inbox'] .fc-messages-detail,
+  .fc-messages-layout[data-pane='detail'] .fc-messages-inbox,
+  .fc-messages-layout[data-pane='detail'] .fc-messages-hero,
+  .fc-messages[data-pane='detail'] .fc-messages-hero {
+    display: none;
+  }
+
+  .fc-messages-back {
+    align-items: center;
+    display: inline-flex;
+  }
+
+  .fc-messages-header {
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+  }
+
+  .fc-messages-detail {
+    min-height: 0;
+    padding: 12px 0 18px;
+  }
+
+  .fc-messages-inbox,
+  .fc-messages-detail {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+@media (max-width: 390px) {
+  .fc-messages,
+  .fc-messages-layout,
+  .fc-messages-inbox,
+  .fc-messages-detail,
+  .fc-messages-row,
+  .fc-messages-bubble {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .fc-messages-composer .fc-button,
+  .fc-messages-header .fc-button,
+  .fc-messages-back {
+    min-height: 44px;
+  }
+}

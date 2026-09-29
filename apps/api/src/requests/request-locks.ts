@@ -34,6 +34,26 @@ export async function lockIntroductionOffer(
   `;
 }
 
+export async function lockConversation(
+  tx: Prisma.TransactionClient,
+  conversationId: string,
+): Promise<void> {
+  await tx.$queryRaw`
+    SELECT id FROM "Conversation" WHERE id = ${conversationId} FOR UPDATE
+  `;
+}
+
+export function isUniqueConstraintError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === 'P2002'
+  ) {
+    return true;
+  }
+  return 'code' in error && error.code === 'P2002';
+}
+
 export async function withRequestRowRetry<T>(
   prisma: PrismaService,
   operation: (tx: Prisma.TransactionClient) => Promise<T>,

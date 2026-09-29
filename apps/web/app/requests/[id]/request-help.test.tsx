@@ -148,6 +148,7 @@ function adviceCard(
     author: helperAuthor,
     body: 'The biggest mistake we made was signing a broad distributor too early.',
     introduction: null,
+    privateChat: null,
     ...overrides,
   };
 }
@@ -170,11 +171,14 @@ function introCard(
       canDecline: false,
       canCancel: false,
     },
+    privateChat: null,
     ...overrides,
   };
 }
 
-function privateCard(): MemberHelpResponse {
+function privateCard(
+  overrides: Partial<MemberHelpResponse> = {},
+): MemberHelpResponse {
   return {
     id: 'res-private',
     type: 'PRIVATE_CHAT_OFFER',
@@ -182,6 +186,8 @@ function privateCard(): MemberHelpResponse {
     author: helperAuthor,
     body: null,
     introduction: null,
+    privateChat: null,
+    ...overrides,
   };
 }
 
@@ -192,6 +198,7 @@ function mockApi(
     advice?: () => Response;
     introduction?: () => Response;
     privateChat?: () => Response;
+    startConversation?: () => Response;
     consent?: () => Response;
     decline?: () => Response;
     cancel?: () => Response;
@@ -219,6 +226,12 @@ function mockApi(
       if (url.includes('/introductions/') && url.endsWith('/cancel')) {
         return (
           options.cancel ?? (() => errorResponse('UNKNOWN', 'missing'))
+        )();
+      }
+      if (url.endsWith('/v1/conversations') && method === 'POST') {
+        return (
+          options.startConversation ??
+          (() => errorResponse('UNKNOWN', 'missing'))
         )();
       }
       if (url.includes('/responses/advice') && method === 'POST') {
@@ -282,7 +295,8 @@ describe('FC-012 request help', () => {
       await screen.findByRole('button', { name: 'I can help' }),
     ).toBeVisible();
     for (const item of screen.getAllByRole('link', { name: 'Messages' })) {
-      expect(item).toHaveAttribute('aria-disabled', 'true');
+      expect(item).toHaveAttribute('href', '/messages');
+      expect(item).not.toHaveAttribute('aria-disabled', 'true');
     }
     await expectAccessible(container);
 
@@ -622,7 +636,7 @@ describe('FC-012 request help', () => {
     ).toBe(true);
     expect(screen.queryByLabelText(/private note/i)).not.toBeInTheDocument();
     for (const item of screen.getAllByRole('link', { name: 'Messages' })) {
-      expect(item).toHaveAttribute('aria-disabled', 'true');
+      expect(item).toHaveAttribute('href', '/messages');
     }
   });
 
@@ -728,6 +742,136 @@ describe('FC-012 request help', () => {
       fetchMock.mock.calls.some(
         ([url, init]) =>
           String(url).includes('/responses/advice') &&
+          (init as RequestInit | undefined)?.method === 'POST',
+      ),
+    ).toBe(false);
+  });
+
+  it('lets the requester start or open a request-linked private chat', async () => {
+    const user = userEvent.setup({ delay: null });
+    const offer = privateCard({
+      privateChat: {
+        conversationId: null,
+        canStart: true,
+        canOpen: false,
+      },
+    });
+    await renderHelp({
+      request: {
+        ...publishedRequest,
+        author: { ...ownerAuthor, id: 'user-self' },
+      },
+      thread: threadPayload([offer], { canOfferHelp: false }),
+      startConversation: () =>
+        response(
+          {
+            conversation: {
+              id: 'convo-1',
+              status: 'ACTIVE',
+              updatedAt: '2026-01-02T03:00:00.000Z',
+              counterpart: helperAuthor,
+              requestContext: {
+                available: true,
+                id: 'req-live',
+                type: 'ASK',
+                status: 'PUBLISHED',
+                headline: publishedRequest.headline,
+                topics: [],
+              },
+              latestMessage: null,
+              canSend: true,
+            },
+          },
+          201,
+        ),
+    });
+    await user.click(
+      await screen.findByRole('button', { name: 'Start private chat' }),
+    );
+    expect(navigation.push).toHaveBeenCalledWith('/messages/convo-1');
+  });
+
+  it('lets the requester open an existing private chat', async () => {
+    const user = userEvent.setup({ delay: null });
+    const { fetchMock } = await renderHelp({
+      request: {
+        ...publishedRequest,
+        author: { ...ownerAuthor, id: 'user-self' },
+      },
+      thread: threadPayload(
+        [
+          privateCard({
+            privateChat: {
+              conversationId: 'convo-1',
+              canStart: false,
+              canOpen: true,
+            },
+          }),
+        ],
+        { canOfferHelp: false },
+      ),
+    });
+    expect(
+      await screen.findByRole('button', { name: 'Open private chat' }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: 'Start private chat' }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Open private chat' }));
+    expect(navigation.push).toHaveBeenCalledWith('/messages/convo-1');
+    expect(
+      fetchMock.mock.calls.some(
+        ([url, init]) =>
+          String(url).endsWith('/v1/conversations') &&
+          (init as RequestInit | undefined)?.method === 'POST',
+      ),
+    ).toBe(false);
+  });
+
+  it('hides private-chat conversation actions from unrelated viewers', async () => {
+    await renderHelp({
+      thread: threadPayload([privateCard()], { canOfferHelp: true }),
+    });
+    expect(
+      await screen.findByText('Chaitanya · Private help offered'),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: 'Start private chat' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Open private chat' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('lets the helper open an existing private chat and not start one', async () => {
+    const user = userEvent.setup({ delay: null });
+    const { fetchMock } = await renderHelp({
+      thread: threadPayload(
+        [
+          privateCard({
+            author: { ...helperAuthor, id: 'user-self' },
+            privateChat: {
+              conversationId: 'convo-9',
+              canStart: false,
+              canOpen: true,
+            },
+          }),
+        ],
+        { canOfferHelp: true, viewerResponseTypes: ['PRIVATE_CHAT_OFFER'] },
+      ),
+    });
+    expect(
+      await screen.findByRole('button', { name: 'Open private chat' }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: 'Start private chat' }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Open private chat' }));
+    expect(navigation.push).toHaveBeenCalledWith('/messages/convo-9');
+    expect(
+      fetchMock.mock.calls.some(
+        ([url, init]) =>
+          String(url).endsWith('/v1/conversations') &&
           (init as RequestInit | undefined)?.method === 'POST',
       ),
     ).toBe(false);

@@ -1,9 +1,14 @@
 import type {
+  ConversationCreatedResponse,
   DiscoverFoundersResponse,
   HelpResponseMutationResponse,
+  MemberConversationResponse,
+  MemberConversationsResponse,
   MemberFounderProfileResponse,
   MemberHelpResponsesResponse,
+  MemberMessagesResponse,
   MemberRequestResponse,
+  MessageSentResponse,
   OwnRequestsResponse,
   RequestDeletedResponse,
   SavedFounderMutationResponse,
@@ -199,6 +204,61 @@ export function cancelIntroduction(
   return onboardingRequest<HelpResponseMutationResponse>(
     `introductions/${encodeURIComponent(id)}/cancel`,
     { method: 'POST', body: JSON.stringify({}) },
+  );
+}
+
+export function listConversations(
+  input: {
+    page?: number;
+    q?: string;
+  } = {},
+): Promise<MemberConversationsResponse> {
+  const params = new URLSearchParams();
+  if (input.page && input.page > 1) params.set('page', String(input.page));
+  if (input.q) params.set('q', input.q);
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return onboardingRequest<MemberConversationsResponse>(
+    `conversations${suffix}`,
+  );
+}
+
+export function createConversation(
+  privateChatOfferResponseId: string,
+): Promise<ConversationCreatedResponse> {
+  return onboardingRequest<ConversationCreatedResponse>('conversations', {
+    method: 'POST',
+    body: JSON.stringify({ privateChatOfferResponseId }),
+  });
+}
+
+export function getConversation(
+  id: string,
+): Promise<MemberConversationResponse> {
+  return onboardingRequest<MemberConversationResponse>(
+    `conversations/${encodeURIComponent(id)}`,
+  );
+}
+
+export function listConversationMessages(
+  id: string,
+  input: { before?: string; limit?: number } = {},
+): Promise<MemberMessagesResponse> {
+  const params = new URLSearchParams();
+  if (input.before) params.set('before', input.before);
+  if (input.limit) params.set('limit', String(input.limit));
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return onboardingRequest<MemberMessagesResponse>(
+    `conversations/${encodeURIComponent(id)}/messages${suffix}`,
+  );
+}
+
+export function sendConversationMessage(
+  id: string,
+  input: { clientMessageId: string; body: string },
+): Promise<MessageSentResponse> {
+  return onboardingRequest<MessageSentResponse>(
+    `conversations/${encodeURIComponent(id)}/messages`,
+    { method: 'POST', body: JSON.stringify(input) },
   );
 }
 

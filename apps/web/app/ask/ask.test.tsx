@@ -420,7 +420,7 @@ describe('FC-011 ask', () => {
     expect(window.localStorage.length).toBe(0);
   });
 
-  it('activates Ask navigation and keeps Messages disabled', async () => {
+  it('activates Ask navigation and enables Messages', async () => {
     mockApi();
     await renderAsk();
     const nav = screen.getByRole('navigation', { name: 'Member navigation' });
@@ -429,10 +429,9 @@ describe('FC-011 ask', () => {
       '/ask',
     );
     expect(within(nav).getByRole('link', { name: 'Messages' })).toHaveAttribute(
-      'aria-disabled',
-      'true',
+      'href',
+      '/messages',
     );
-    expect(nav.querySelector('a[href="/messages"]')).toBeNull();
   });
 
   it('keeps 390 and 768 completeness for types, urgency, and save draft', () => {
