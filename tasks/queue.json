@@ -145,7 +145,7 @@
       "id": "FC-010",
       "title": "Founder profile and discover",
       "phase": "member",
-      "status": "pending",
+      "status": "completed",
       "authorization": "AUTO_LOCAL",
       "depends_on": [
         "FC-009"

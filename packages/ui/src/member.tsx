@@ -4,6 +4,7 @@ import { cx } from './utils';
 
 export interface NavItemProps {
   active?: boolean;
+  disabled?: boolean;
   href: string;
   icon?: ReactNode;
   label: string;
@@ -11,10 +12,25 @@ export interface NavItemProps {
 
 export function MemberNavItem({
   active = false,
+  disabled = false,
   href,
   icon,
   label,
 }: NavItemProps) {
+  if (disabled) {
+    return (
+      <span
+        aria-disabled="true"
+        className="fc-member-nav-item"
+        data-nav-item={label.toLowerCase()}
+        role="link"
+        tabIndex={-1}
+      >
+        {icon ? <span aria-hidden="true">{icon}</span> : null}
+        <span>{label}</span>
+      </span>
+    );
+  }
   return (
     <a
       aria-current={active ? 'page' : undefined}
@@ -83,7 +99,7 @@ export interface MemberTopNavigationProps {
   actions?: ReactNode;
   activeItem?: string;
   className?: string;
-  items: Array<{ href: string; label: string }>;
+  items: Array<{ disabled?: boolean; href: string; label: string }>;
   logo?: ReactNode;
 }
 
@@ -111,15 +127,21 @@ export function MemberTopNavigation({
   return (
     <header className={cx('fc-member-topbar', className)}>
       <div className="fc-member-topbar__inner">
-        <a aria-label="FounderChatters home" className="fc-wordmark" href="/">
+        <a
+          aria-label="FounderChatters home"
+          className="fc-wordmark"
+          href="/home"
+        >
           {logo ?? 'FounderChatters'}
         </a>
         <nav aria-label="Member navigation" className="fc-member-topbar__nav">
           {items.map((item) => (
             <MemberNavItem
               active={activeItem === item.label}
-              key={item.href}
-              {...item}
+              disabled={item.disabled === true}
+              href={item.href}
+              key={item.label}
+              label={item.label}
             />
           ))}
         </nav>

@@ -10,6 +10,7 @@ import { AppController } from './app.controller.js';
 import { ApplicationModule } from './application/application.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ApiExceptionFilter } from './http/api-exception.filter.js';
+import { FoundersModule } from './founders/founders.module.js';
 import { OnboardingModule } from './onboarding/onboarding.module.js';
 import { RequestIdMiddleware } from './http/request-id.middleware.js';
 
@@ -19,6 +20,7 @@ import { RequestIdMiddleware } from './http/request-id.middleware.js';
     ApplicationModule,
     AdminApplicationModule,
     OnboardingModule,
+    FoundersModule,
   ],
   controllers: [AppController],
   providers: [

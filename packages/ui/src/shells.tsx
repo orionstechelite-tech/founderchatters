@@ -13,12 +13,21 @@ export interface ShellProps {
   children: ReactNode;
 }
 
-export function MemberShell({ children }: ShellProps) {
+export function MemberShell({
+  actions,
+  activeItem = 'Home',
+  children,
+  items = compactMemberItems,
+}: ShellProps & {
+  actions?: ReactNode;
+  activeItem?: string;
+  items?: Array<{ disabled?: boolean; href: string; label: string }>;
+}) {
   return (
     <div className="fc-member-shell">
       <MemberTopNavigation
-        activeItem="Home"
-        items={compactMemberItems}
+        activeItem={activeItem}
+        items={items}
         logo={
           <>
             <span className="fc-member-wordmark-full">FounderChatters</span>
@@ -26,13 +35,15 @@ export function MemberShell({ children }: ShellProps) {
           </>
         }
         actions={
-          <button
-            aria-label="Open member menu"
-            className="fc-member-menu"
-            type="button"
-          >
-            •••
-          </button>
+          actions ?? (
+            <button
+              aria-label="Open member menu"
+              className="fc-member-menu"
+              type="button"
+            >
+              •••
+            </button>
+          )
         }
       />
       <main className="fc-member-shell__content">{children}</main>

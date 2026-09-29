@@ -56,23 +56,26 @@ describe('founder application HTTP integration', () => {
   });
 
   afterAll(async () => {
-    if (userIds.length > 0) {
-      const applicationIds = (
-        await prisma.founderApplication.findMany({
+    try {
+      if (userIds.length > 0) {
+        const applicationIds = (
+          await prisma.founderApplication.findMany({
+            where: { userId: { in: userIds } },
+            select: { id: true },
+          })
+        ).map(({ id }) => id);
+        await prisma.applicationStatusEvent.deleteMany({
+          where: { applicationId: { in: applicationIds } },
+        });
+        await prisma.founderApplication.deleteMany({
           where: { userId: { in: userIds } },
-          select: { id: true },
-        })
-      ).map(({ id }) => id);
-      await prisma.applicationStatusEvent.deleteMany({
-        where: { applicationId: { in: applicationIds } },
-      });
-      await prisma.founderApplication.deleteMany({
-        where: { userId: { in: userIds } },
-      });
-      await prisma.session.deleteMany({ where: { userId: { in: userIds } } });
-      await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+        });
+        await prisma.session.deleteMany({ where: { userId: { in: userIds } } });
+        await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+      }
+    } finally {
+      await app.close();
     }
-    await app.close();
   });
 
   async function founder(

@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const navigation = vi.hoisted(() => ({ replace: vi.fn() }));
 vi.mock('next/navigation', () => ({
+  usePathname: () => '/home',
   useRouter: () => navigation,
 }));
 
@@ -335,8 +336,9 @@ describe('FC-009 onboarding', { timeout: 30_000 }, () => {
         ),
     );
     render(createElement(OnboardingClient));
-    await screen.findByRole('heading', { name: /What are you building/i });
-    await user.type(screen.getByLabelText('Display name'), 'Kept Name');
+    const displayName = await screen.findByLabelText('Display name');
+    await user.clear(displayName);
+    await user.type(displayName, 'Kept Name');
     await user.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('alert')).toBeVisible();
     expect(screen.getByLabelText('Display name')).toHaveValue('Kept Name');
@@ -350,6 +352,27 @@ describe('FC-009 onboarding', { timeout: 30_000 }, () => {
     render(createElement(HomeGate));
     await waitFor(() =>
       expect(navigation.replace).toHaveBeenCalledWith('/onboarding'),
+    );
+  });
+
+  it('sends unverified /home visitors to verify email', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValueOnce(
+        response({
+          ...onboardingSession,
+          user: { ...onboardingSession.user, emailVerified: false },
+          access: {
+            state: 'VERIFY_EMAIL',
+            applicationStatus: null,
+            onboardingCompleted: false,
+          },
+        }),
+      ),
+    );
+    render(createElement(HomeGate));
+    await waitFor(() =>
+      expect(navigation.replace).toHaveBeenCalledWith('/verify-email'),
     );
   });
 
