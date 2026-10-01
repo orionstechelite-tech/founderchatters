@@ -227,6 +227,7 @@ describe('FC-011 request detail', () => {
           body: 'Don’t start with a broad distributor. Validate access first.',
           introduction: null,
           privateChat: null,
+          helpConfirmation: null,
         },
         {
           id: 'res-2',
@@ -247,6 +248,7 @@ describe('FC-011 request detail', () => {
             canStart: true,
             canOpen: false,
           },
+          helpConfirmation: null,
         },
       ],
       page: 1,

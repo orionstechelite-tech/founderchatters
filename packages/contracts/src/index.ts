@@ -674,6 +674,7 @@ export type MemberHelpResponse = {
   body: string | null;
   introduction: HelpResponseIntroduction | null;
   privateChat: HelpResponsePrivateChat | null;
+  helpConfirmation: OwnerHelpConfirmation | null;
 };
 
 export type MemberHelpResponsesResponse = {
@@ -806,4 +807,129 @@ export type MemberMessagesResponse = {
 
 export type MessageSentResponse = {
   message: MemberMessage;
+};
+
+export const HELP_OUTCOMES = {
+  helped: 'HELPED',
+  stillTalking: 'STILL_TALKING',
+  notHelpful: 'NOT_HELPFUL',
+} as const;
+
+export type HelpOutcome = (typeof HELP_OUTCOMES)[keyof typeof HELP_OUTCOMES];
+
+export const HELP_CONFIRMATION_ERROR_CODES = {
+  notFound: 'HELP_CONFIRMATION_NOT_FOUND',
+  invalidInput: 'HELP_CONFIRMATION_INVALID_INPUT',
+  notAllowed: 'HELP_CONFIRMATION_NOT_ALLOWED',
+  invalidState: 'HELP_CONFIRMATION_INVALID_STATE',
+  contributionNotEligible: 'CONTRIBUTION_NOT_ELIGIBLE',
+  thankYouAlreadyExists: 'THANK_YOU_ALREADY_EXISTS',
+} as const;
+
+export type HelpConfirmationErrorCode =
+  (typeof HELP_CONFIRMATION_ERROR_CODES)[keyof typeof HELP_CONFIRMATION_ERROR_CODES];
+
+export const REPUTATION_ERROR_CODES = {
+  invalidInput: 'REPUTATION_INVALID_INPUT',
+} as const;
+
+export type ReputationErrorCode =
+  (typeof REPUTATION_ERROR_CODES)[keyof typeof REPUTATION_ERROR_CODES];
+
+export const HELP_CONFIRMATION_LIMITS = {
+  topicIdsMax: 3,
+  thankYouMin: 1,
+  thankYouMax: 500,
+} as const;
+
+export const REPUTATION_LIMITS = {
+  pageSizeDefault: 20,
+  pageSizeMax: 50,
+  pageMax: 10_000,
+  helpfulTopicsMax: 5,
+} as const;
+
+export const REPUTATION_HISTORY_LABELS = {
+  ADVICE: 'Advice confirmed helpful',
+  INTRODUCTION_OFFER: 'Introduction confirmed helpful',
+  PRIVATE_CHAT_OFFER: 'Private help confirmed helpful',
+} as const satisfies Record<ResponseType, string>;
+
+export type CreateHelpConfirmationBody = {
+  responseId: string;
+  outcome: HelpOutcome;
+  topicIds?: string[];
+};
+
+export type CreateThankYouBody = {
+  body: string;
+};
+
+export type OwnerHelpConfirmation = {
+  id: string | null;
+  outcome: HelpOutcome | null;
+  creditedResponseId: string | null;
+  canConfirm: boolean;
+  canUpdate: boolean;
+  hasContribution: boolean;
+  hasThankYou: boolean;
+  canThank: boolean;
+};
+
+export type MemberHelpConfirmation = {
+  id: string;
+  requestId: string;
+  outcome: HelpOutcome;
+  creditedResponseId: string | null;
+  helper: MemberRequestAuthor | null;
+  topicIds: string[];
+  hasContribution: boolean;
+  hasThankYou: boolean;
+  canThank: boolean;
+};
+
+export type HelpConfirmationMutationResponse = {
+  confirmation: MemberHelpConfirmation;
+};
+
+export type ThankYouMutationResponse = {
+  thankYou: {
+    body: string;
+    createdAt: string;
+  };
+};
+
+export type ReputationTopic = MemberTopicRef & {
+  count: number;
+};
+
+export type ReputationContribution = {
+  id: string;
+  type: ResponseType;
+  label: string;
+  topics: MemberTopicRef[];
+  createdAt: string;
+  confirmer: MemberRequestAuthor | null;
+  thankYou: string | null;
+  requestAvailable: boolean;
+  requestId: string | null;
+};
+
+export type ReputationSummary = {
+  foundersHelped: number;
+  confirmedHelps: number;
+  introductions: number;
+  helpfulTopics: ReputationTopic[];
+  mostRecognizedTopic: ReputationTopic | null;
+};
+
+export type MemberReputationResponse = {
+  founder: MemberRequestAuthor;
+  isSelf: boolean;
+  summary: ReputationSummary;
+  contributions: ReputationContribution[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
 };

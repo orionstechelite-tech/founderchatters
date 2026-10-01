@@ -1,12 +1,17 @@
 'use client';
 
-import type { MemberFounderProfile } from '@founderchatters/contracts';
+import type {
+  MemberFounderProfile,
+  MemberReputationResponse,
+} from '@founderchatters/contracts';
 import { Button } from '@founderchatters/ui';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { OnboardingApiError } from '../../onboarding/onboarding-api';
 import {
   getFounderProfile,
+  getFounderReputation,
   saveFounder,
   unsaveFounder,
 } from '../../member/member-api';
@@ -14,6 +19,9 @@ import { initialsFrom, profileMeta } from '../../member/member-format';
 
 export function FounderProfileClient({ founderId }: { founderId: string }) {
   const [founder, setFounder] = useState<MemberFounderProfile | null>(null);
+  const [reputation, setReputation] = useState<MemberReputationResponse | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -31,6 +39,15 @@ export function FounderProfileClient({ founderId }: { founderId: string }) {
             ? cause.message
             : 'That founder is not available.',
         );
+      });
+    void getFounderReputation(founderId, { pageSize: 5 })
+      .then((payload) => {
+        if (cancelled) return;
+        setReputation(payload);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setReputation(null);
       });
     return () => {
       cancelled = true;
@@ -161,6 +178,68 @@ export function FounderProfileClient({ founderId }: { founderId: string }) {
           ) : null}
         </section>
       ) : null}
+
+      <section
+        className="fc-founder-section fc-founder-contribution"
+        aria-labelledby="contribution-heading"
+      >
+        <h2 className="fc-label" id="contribution-heading">
+          Contribution
+        </h2>
+        {reputation && reputation.summary.confirmedHelps > 0 ? (
+          <>
+            <p className="fc-founder-reputation-metrics">
+              {reputation.summary.foundersHelped} founders helped ·{' '}
+              {reputation.summary.introductions} introductions
+            </p>
+            {reputation.summary.helpfulTopics.length > 0 ? (
+              <>
+                <p className="fc-label">Most helpful in</p>
+                <ul className="fc-founder-chips">
+                  {reputation.summary.helpfulTopics.map((topic) => (
+                    <li className="fc-founder-chip" key={topic.id}>
+                      {topic.label}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
+            {reputation.contributions.find((item) => item.thankYou) ? (
+              <blockquote className="fc-founder-thankyou">
+                “
+                {
+                  reputation.contributions.find((item) => item.thankYou)
+                    ?.thankYou
+                }
+                ”
+              </blockquote>
+            ) : null}
+            {reputation.contributions.length > 0 ? (
+              <ul className="fc-contribution-list">
+                {reputation.contributions.slice(0, 3).map((item) => (
+                  <li className="fc-contribution-card" key={item.id}>
+                    <p className="fc-contribution-card__kicker">{item.label}</p>
+                    <p className="fc-contribution-card__title">
+                      {item.confirmer
+                        ? `Helped ${item.confirmer.displayName}`
+                        : 'A founder confirmed this helped'}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </>
+        ) : (
+          <p>No confirmed contributions yet.</p>
+        )}
+        {founder.isSelf ? (
+          <p>
+            <Link className="fc-founder-reputation-link" href="/reputation">
+              View reputation
+            </Link>
+          </p>
+        ) : null}
+      </section>
 
       {error ? (
         <p className="fc-founder-inline-error" role="alert">

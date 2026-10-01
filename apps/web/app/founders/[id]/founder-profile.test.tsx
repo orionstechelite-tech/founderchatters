@@ -83,7 +83,11 @@ function response(body: unknown, status = 200): Response {
   });
 }
 
-function mockApi(profile: unknown = { founder: otherProfile }, status = 200) {
+function mockApi(
+  profile: unknown = { founder: otherProfile },
+  status = 200,
+  reputation?: unknown,
+) {
   const fetchMock = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
@@ -93,6 +97,33 @@ function mockApi(profile: unknown = { founder: otherProfile }, status = 200) {
           saved: init?.method !== 'DELETE',
           savedCount: init?.method === 'DELETE' ? 0 : 1,
         });
+      }
+      if (url.includes('/reputation')) {
+        return response(
+          reputation ?? {
+            founder: {
+              id: otherProfile.id,
+              displayName: otherProfile.displayName,
+              avatarUrl: null,
+              companyName: otherProfile.company.name,
+              city: otherProfile.city,
+              country: otherProfile.country,
+            },
+            isSelf: false,
+            summary: {
+              foundersHelped: 0,
+              confirmedHelps: 0,
+              introductions: 0,
+              helpfulTopics: [],
+              mostRecognizedTopic: null,
+            },
+            contributions: [],
+            page: 1,
+            pageSize: 5,
+            total: 0,
+            totalPages: 1,
+          },
+        );
       }
       if (url.includes('/v1/founders/')) {
         return response(profile, status);
@@ -121,7 +152,7 @@ async function expectAccessible(container: HTMLElement) {
 }
 
 describe('FC-010 founder profile', () => {
-  it('renders real fields and omits deferred Message, Ask, and contribution blocks', async () => {
+  it('renders real fields and omits Message and Ask actions', async () => {
     mockApi();
     const page = await renderProfile('user-other');
     expect(
@@ -155,8 +186,7 @@ describe('FC-010 founder profile', () => {
     expect(
       screen.queryByRole('button', { name: 'Ask for help' }),
     ).not.toBeInTheDocument();
-    expect(screen.queryByText(/CONTRIBUTION/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/founders helped/i)).not.toBeInTheDocument();
+    expect(screen.getByText('No confirmed contributions yet.')).toBeVisible();
     expect(screen.queryByText(/Founder at OrbitFlow/i)).not.toBeInTheDocument();
     await expectAccessible(page.container);
   });
@@ -194,6 +224,9 @@ describe('FC-010 founder profile', () => {
     expect(
       screen.queryByRole('button', { name: 'Save founder' }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'View reputation' }),
+    ).toHaveAttribute('href', '/reputation');
     const nav = screen.getByRole('navigation', { name: 'Member navigation' });
     expect(nav.querySelector('[data-nav-item="profile"]')).toHaveAttribute(
       'aria-current',

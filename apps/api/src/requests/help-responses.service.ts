@@ -10,6 +10,8 @@ import {
   type MemberHelpResponse,
   type MemberHelpResponsesResponse,
   type MemberRequestAuthor,
+  type OwnerHelpConfirmation,
+  type HelpOutcome,
   type ResponseType,
 } from '@founderchatters/contracts';
 import type { Prisma } from '../../../../generated/prisma/client.js';
@@ -32,6 +34,7 @@ import {
   withRequestRowRetry,
 } from './request-locks.js';
 import { parseRequestId, requestNotFound } from './requests-query.js';
+import { HelpConfirmationsService } from './help-confirmations.service.js';
 
 const authorSelect = {
   id: true,
@@ -82,6 +85,8 @@ export class HelpResponsesService {
   constructor(
     @Inject(PrismaService)
     private readonly prisma: PrismaService,
+    @Inject(HelpConfirmationsService)
+    private readonly confirmations: HelpConfirmationsService,
   ) {}
 
   async list(
@@ -131,6 +136,15 @@ export class HelpResponsesService {
       isOwner,
       rows,
     );
+    const confirmationByHelper = isOwner
+      ? await this.ownerConfirmations(id, callerId, rows)
+      : new Map();
+    const helperMessageByHelper = isOwner
+      ? await this.helperMessageFlags(id, request!.authorId, rows)
+      : new Map<string, boolean>();
+    const requestMutable =
+      request!.status === REQUEST_STATUSES.published ||
+      request!.status === REQUEST_STATUSES.resolved;
     return {
       responses: rows.map((row) =>
         this.toMemberResponse(
@@ -139,6 +153,15 @@ export class HelpResponsesService {
           isOwner,
           helperBlocked.get(row.authorId) ?? false,
           conversationByHelper.get(row.authorId) ?? null,
+          this.ownerConfirmationForRow(
+            isOwner,
+            row,
+            confirmationByHelper.get(row.authorId) ?? null,
+            helperBlocked.get(row.authorId) ?? false,
+            helperMessageByHelper.get(row.authorId) ?? false,
+            requestMutable,
+            Boolean(conversationByHelper.get(row.authorId)),
+          ),
         ),
       ),
       page: parsed.page,
@@ -285,7 +308,14 @@ export class HelpResponsesService {
       });
     });
     return {
-      response: this.toMemberResponse(stored, callerId, false, false, null),
+      response: this.toMemberResponse(
+        stored,
+        callerId,
+        false,
+        false,
+        null,
+        null,
+      ),
     };
   }
 
@@ -410,6 +440,7 @@ export class HelpResponsesService {
         Boolean(isOwner),
         blocked,
         null,
+        null,
       ),
     };
   }
@@ -499,6 +530,121 @@ export class HelpResponsesService {
     return Boolean(row);
   }
 
+  private async ownerConfirmations(
+    requestId: string,
+    confirmerId: string,
+    rows: StoredResponse[],
+  ): Promise<
+    Map<
+      string,
+      {
+        id: string;
+        outcome: HelpOutcome;
+        responseId: string | null;
+        hasContribution: boolean;
+        hasThankYou: boolean;
+      }
+    >
+  > {
+    const helperIds = [...new Set(rows.map((row) => row.authorId))];
+    if (helperIds.length === 0) return new Map();
+    const rowsFound = await this.prisma.helpConfirmation.findMany({
+      where: {
+        requestId,
+        confirmerId,
+        helperId: { in: helperIds },
+      },
+      include: {
+        contribution: { include: { thankYou: true } },
+      },
+    });
+    const map = new Map<
+      string,
+      {
+        id: string;
+        outcome: HelpOutcome;
+        responseId: string | null;
+        hasContribution: boolean;
+        hasThankYou: boolean;
+      }
+    >();
+    for (const row of rowsFound) {
+      map.set(row.helperId, {
+        id: row.id,
+        outcome: row.outcome,
+        responseId: row.responseId,
+        hasContribution: Boolean(row.contribution),
+        hasThankYou: Boolean(row.contribution?.thankYou),
+      });
+    }
+    return map;
+  }
+
+  private async helperMessageFlags(
+    requestId: string,
+    requesterId: string,
+    rows: StoredResponse[],
+  ): Promise<Map<string, boolean>> {
+    const flags = new Map<string, boolean>();
+    const helpers = rows
+      .filter((row) => row.type === RESPONSE_TYPES.privateChatOffer)
+      .map((row) => row.authorId);
+    for (const helperId of helpers) {
+      if (flags.has(helperId)) continue;
+      const evidence = await this.confirmations.privateChatEvidence(
+        this.prisma,
+        requestId,
+        requesterId,
+        helperId,
+      );
+      flags.set(helperId, evidence.helperMessage);
+    }
+    return flags;
+  }
+
+  private ownerConfirmationForRow(
+    isOwner: boolean,
+    row: StoredResponse,
+    confirmation: {
+      id: string;
+      outcome: HelpOutcome;
+      responseId: string | null;
+      hasContribution: boolean;
+      hasThankYou: boolean;
+    } | null,
+    helperBlocked: boolean,
+    helperMessage: boolean,
+    requestMutable: boolean,
+    hasConversation: boolean,
+  ): OwnerHelpConfirmation | null {
+    const helperEligible = this.authorIsEligible(row.author);
+    const canCreditNonHelped =
+      requestMutable &&
+      helperEligible &&
+      !helperBlocked &&
+      row.deletedAt === null &&
+      (row.type === RESPONSE_TYPES.advice ||
+        (row.type === RESPONSE_TYPES.introductionOffer &&
+          Boolean(row.introduction)) ||
+        (row.type === RESPONSE_TYPES.privateChatOffer && hasConversation));
+    const canCreditHelped =
+      canCreditNonHelped &&
+      (row.type !== RESPONSE_TYPES.introductionOffer ||
+        row.introduction?.status === INTRODUCTION_STATUSES.introduced) &&
+      (row.type !== RESPONSE_TYPES.privateChatOffer || helperMessage);
+    return this.confirmations.toOwnerHelpConfirmation({
+      isOwner,
+      responseId: row.id,
+      helperBlocked,
+      helperEligible,
+      requestMutable,
+      responseDeleted: row.deletedAt !== null,
+      canCreditNonHelped,
+      canCreditHelped,
+      confirmation,
+    });
+  }
+
   private async privateChatConversations(
     requestId: string,
     callerId: string,
@@ -538,6 +684,7 @@ export class HelpResponsesService {
     isRequestOwner: boolean,
     blocked: boolean,
     conversationId: string | null,
+    helpConfirmation: OwnerHelpConfirmation | null,
   ): MemberHelpResponse {
     const isHelper = row.authorId === callerId;
     const roleSafe = isRequestOwner || isHelper;
@@ -556,6 +703,7 @@ export class HelpResponsesService {
               canOpen: conversationId !== null,
             }
           : null,
+      helpConfirmation: isRequestOwner ? helpConfirmation : null,
     };
   }
 
