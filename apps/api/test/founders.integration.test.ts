@@ -451,11 +451,12 @@ describe('founder discover HTTP integration', { timeout: 30_000 }, () => {
   });
 
   it('hides inactive and merged expertise from member surfaces', async () => {
+    const suffix = `${Date.now()}`;
     const viewer = await member('topic-viewer');
+    const targetName = `Topic Target ${suffix}`;
     const target = await member('topic-target', {
-      displayName: 'Topic Target',
+      displayName: targetName,
     });
-    const suffix = `${Date.now()}-${target.id.slice(-6)}`;
     const inactiveTopic = await prisma.taxonomyTopic.create({
       data: {
         slug: `fc010-inactive-${suffix}`,
@@ -496,7 +497,10 @@ describe('founder discover HTTP integration', { timeout: 30_000 }, () => {
       ).json()) as MemberFounderProfileResponse;
       expect(profile.founder.expertise).toEqual([]);
       const listed = (await (
-        await request('/v1/founders', viewer.cookie)
+        await request(
+          `/v1/founders?q=${encodeURIComponent(targetName)}`,
+          viewer.cookie,
+        )
       ).json()) as DiscoverFoundersResponse;
       expect(
         listed.founders.find((founder) => founder.id === target.id)?.expertise,

@@ -1,17 +1,21 @@
 import type {
   ConversationCreatedResponse,
+  CreateHelpConfirmationBody,
   DiscoverFoundersResponse,
+  HelpConfirmationMutationResponse,
   HelpResponseMutationResponse,
   MemberConversationResponse,
   MemberConversationsResponse,
   MemberFounderProfileResponse,
   MemberHelpResponsesResponse,
   MemberMessagesResponse,
+  MemberReputationResponse,
   MemberRequestResponse,
   MessageSentResponse,
   OwnRequestsResponse,
   RequestDeletedResponse,
   SavedFounderMutationResponse,
+  ThankYouMutationResponse,
   UpsertRequestBody,
 } from '@founderchatters/contracts';
 
@@ -260,6 +264,51 @@ export function sendConversationMessage(
     `conversations/${encodeURIComponent(id)}/messages`,
     { method: 'POST', body: JSON.stringify(input) },
   );
+}
+
+export function createHelpConfirmation(
+  requestId: string,
+  body: CreateHelpConfirmationBody,
+): Promise<HelpConfirmationMutationResponse> {
+  return onboardingRequest<HelpConfirmationMutationResponse>(
+    `requests/${encodeURIComponent(requestId)}/help-confirmations`,
+    { method: 'POST', body: JSON.stringify(body) },
+  );
+}
+
+export function createThankYouNote(
+  confirmationId: string,
+  body: string,
+): Promise<ThankYouMutationResponse> {
+  return onboardingRequest<ThankYouMutationResponse>(
+    `help-confirmations/${encodeURIComponent(confirmationId)}/thank-you`,
+    { method: 'POST', body: JSON.stringify({ body }) },
+  );
+}
+
+export function getMyReputation(
+  input: { page?: number; pageSize?: number } = {},
+): Promise<MemberReputationResponse> {
+  return onboardingRequest<MemberReputationResponse>(
+    `me/reputation${reputationQuery(input)}`,
+  );
+}
+
+export function getFounderReputation(
+  id: string,
+  input: { page?: number; pageSize?: number } = {},
+): Promise<MemberReputationResponse> {
+  return onboardingRequest<MemberReputationResponse>(
+    `founders/${encodeURIComponent(id)}/reputation${reputationQuery(input)}`,
+  );
+}
+
+function reputationQuery(input: { page?: number; pageSize?: number }): string {
+  const params = new URLSearchParams();
+  if (input.page && input.page > 1) params.set('page', String(input.page));
+  if (input.pageSize) params.set('pageSize', String(input.pageSize));
+  const encoded = params.toString();
+  return encoded ? `?${encoded}` : '';
 }
 
 export { authSessionRequest } from '../onboarding/onboarding-api';

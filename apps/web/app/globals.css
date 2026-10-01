@@ -1917,7 +1917,8 @@ body {
   .fc-member-shell__content:has(.fc-discover),
   .fc-member-shell__content:has(.fc-founder-profile),
   .fc-member-shell__content:has(.fc-ask),
-  .fc-member-shell__content:has(.fc-request-detail) {
+  .fc-member-shell__content:has(.fc-request-detail),
+  .fc-member-shell__content:has(.fc-reputation) {
     padding-inline: 18px;
   }
 
@@ -2707,6 +2708,302 @@ body {
   .fc-messages-composer .fc-button,
   .fc-messages-header .fc-button,
   .fc-messages-back {
+    min-height: 44px;
+  }
+}
+
+.fc-help-confirmed {
+  color: var(--fc-color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 8px 0 0;
+}
+
+.fc-confirm-outcomes {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+
+.fc-confirm-outcome {
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 16px;
+  min-height: 74px;
+  padding: 16px;
+  text-align: left;
+}
+
+.fc-confirm-outcome span {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.fc-confirm-outcome small {
+  color: var(--fc-color-text-secondary);
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.fc-confirm-outcome--selected {
+  background: var(--fc-color-inverse);
+  border-color: var(--fc-color-inverse);
+  color: var(--fc-color-text-inverse);
+}
+
+.fc-confirm-outcome--selected small {
+  color: #bfc0bb;
+}
+
+.fc-confirm-outcome:focus-visible {
+  outline: 2px solid var(--fc-color-inverse);
+  outline-offset: 2px;
+}
+
+.fc-confirm-topics {
+  border: 0;
+  margin: 0 0 16px;
+  min-width: 0;
+  padding: 0;
+}
+
+.fc-confirm-topics legend {
+  color: var(--fc-color-text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.fc-confirm-topic-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.fc-confirm-topic {
+  align-items: center;
+  background: #f6f4ec;
+  border-radius: 14px;
+  display: inline-flex;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+}
+
+.fc-confirm-recorded {
+  background: var(--fc-color-inverse);
+  border-radius: 20px;
+  color: var(--fc-color-text-inverse);
+  margin: 12px 0 20px;
+  padding: 18px 16px 24px;
+}
+
+.fc-confirm-recorded__kicker {
+  color: var(--fc-color-accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 16px 0 6px;
+  text-transform: uppercase;
+}
+
+.fc-confirm-recorded__kicker:first-child {
+  margin-top: 0;
+}
+
+.fc-confirm-recorded__metric {
+  font: 400 32px/1 var(--fc-font-serif);
+  margin: 0;
+}
+
+.fc-confirm-recorded__topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fc-confirm-recorded__topics li {
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.fc-confirm-recorded__note {
+  color: #e0e0d6;
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.fc-reputation {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  overflow-x: hidden;
+}
+
+.fc-reputation-hero h1 {
+  font: 400 48px/1 var(--fc-font-serif);
+  margin: 8px 0 12px;
+}
+
+.fc-reputation-lead,
+.fc-reputation-contract,
+.fc-reputation-empty p {
+  color: var(--fc-color-text-secondary);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.fc-reputation-metrics {
+  font-size: 18px;
+  margin: 16px 0 28px;
+}
+
+.fc-reputation-snapshot {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 24px 0 0;
+}
+
+.fc-reputation-snapshot dt {
+  color: var(--fc-color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.fc-reputation-snapshot dd {
+  font: 400 28px/1 var(--fc-font-serif);
+  margin: 8px 0 0;
+}
+
+.fc-contribution-list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.fc-contribution-card {
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.fc-contribution-card__kicker {
+  color: var(--fc-color-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+
+.fc-contribution-card__title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.fc-contribution-card__topics,
+.fc-contribution-card__meta {
+  color: var(--fc-color-text-secondary);
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.fc-contribution-card__note {
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 10px 0 0;
+  white-space: pre-wrap;
+}
+
+.fc-reputation-pagination {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.fc-reputation-empty {
+  margin: 12px 0 28px;
+  max-width: 42ch;
+}
+
+.fc-reputation-empty .fc-button,
+.fc-confirm-success .fc-button,
+a.fc-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.fc-founder-reputation-metrics,
+.fc-founder-thankyou {
+  margin: 8px 0 16px;
+}
+
+.fc-founder-thankyou {
+  font-size: 16px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.fc-founder-reputation-link {
+  color: inherit;
+  font-weight: 600;
+}
+
+.fc-founder-reputation-link:focus-visible {
+  outline: 2px solid var(--fc-color-inverse);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1024px) {
+  .fc-reputation-hero h1 {
+    font-size: 40px;
+  }
+
+  .fc-reputation-snapshot {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .fc-reputation,
+  .fc-confirm-sheet {
+    max-width: 100%;
+  }
+
+  .fc-reputation-snapshot {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 390px) {
+  .fc-reputation-hero h1,
+  .fc-confirm-sheet .fc-help-sheet__title {
+    font-size: 34px;
+  }
+
+  .fc-confirm-outcome,
+  .fc-confirm-topic,
+  .fc-confirm-sheet .fc-button,
+  .fc-reputation-pagination .fc-button,
+  .fc-reputation-empty .fc-button {
     min-height: 44px;
   }
 }

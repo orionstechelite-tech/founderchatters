@@ -30,6 +30,7 @@ function resolveActiveItem(
   if (pathname === '/messages' || pathname.startsWith('/messages/')) {
     return 'Messages';
   }
+  if (pathname === '/reputation') return 'Profile';
   if (pathname.startsWith('/founders/')) {
     return pathname === `/founders/${userId}` ? 'Profile' : '';
   }

@@ -25,6 +25,7 @@ import {
   declineIntroduction,
   listRequestResponses,
 } from '../../member/member-api';
+import { ConfirmHelpSheet } from './confirm-help-sheet';
 
 type ConfirmAction = 'consent' | 'decline' | 'cancel' | null;
 
@@ -73,6 +74,10 @@ export function RequestHelpThread({
   const [confirm, setConfirm] = useState<{
     action: ConfirmAction;
     introductionId: string;
+  } | null>(null);
+  const [confirmHelp, setConfirmHelp] = useState<{
+    response: MemberHelpResponse;
+    mode: 'confirm' | 'update' | 'thank';
   } | null>(null);
 
   async function refresh() {
@@ -370,6 +375,45 @@ export function RequestHelpThread({
                     ) : null}
                   </div>
                 ) : null}
+                {isOwner && response.helpConfirmation?.outcome === 'HELPED' ? (
+                  <p className="fc-help-confirmed">Help confirmed</p>
+                ) : null}
+                {isOwner && response.helpConfirmation ? (
+                  <div className="fc-help-card__actions">
+                    {response.helpConfirmation.canConfirm ? (
+                      <Button
+                        onClick={() =>
+                          setConfirmHelp({ response, mode: 'confirm' })
+                        }
+                        type="button"
+                      >
+                        Confirm help
+                      </Button>
+                    ) : null}
+                    {response.helpConfirmation.canUpdate ? (
+                      <Button
+                        onClick={() =>
+                          setConfirmHelp({ response, mode: 'update' })
+                        }
+                        type="button"
+                        variant="secondary"
+                      >
+                        Update help outcome
+                      </Button>
+                    ) : null}
+                    {response.helpConfirmation.canThank ? (
+                      <Button
+                        onClick={() =>
+                          setConfirmHelp({ response, mode: 'thank' })
+                        }
+                        type="button"
+                        variant="secondary"
+                      >
+                        Add thank-you
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
               </li>
             );
           })}
@@ -634,6 +678,17 @@ export function RequestHelpThread({
           </Button>
         </div>
       </dialog>
+      {confirmHelp ? (
+        <ConfirmHelpSheet
+          key={`${confirmHelp.response.id}-${confirmHelp.mode}`}
+          mode={confirmHelp.mode}
+          onClose={() => setConfirmHelp(null)}
+          onRecorded={refresh}
+          open
+          request={request}
+          response={confirmHelp.response}
+        />
+      ) : null}
     </div>
   );
 }

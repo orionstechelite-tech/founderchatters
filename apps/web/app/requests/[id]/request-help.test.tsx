@@ -149,6 +149,7 @@ function adviceCard(
     body: 'The biggest mistake we made was signing a broad distributor too early.',
     introduction: null,
     privateChat: null,
+    helpConfirmation: null,
     ...overrides,
   };
 }
@@ -172,6 +173,7 @@ function introCard(
       canCancel: false,
     },
     privateChat: null,
+    helpConfirmation: null,
     ...overrides,
   };
 }
@@ -187,6 +189,7 @@ function privateCard(
     body: null,
     introduction: null,
     privateChat: null,
+    helpConfirmation: null,
     ...overrides,
   };
 }
@@ -202,6 +205,8 @@ function mockApi(
     consent?: () => Response;
     decline?: () => Response;
     cancel?: () => Response;
+    confirmHelp?: () => Response;
+    thankYou?: () => Response;
   } = {},
 ) {
   const request = options.request ?? publishedRequest;
@@ -232,6 +237,16 @@ function mockApi(
         return (
           options.startConversation ??
           (() => errorResponse('UNKNOWN', 'missing'))
+        )();
+      }
+      if (url.includes('/help-confirmations') && url.endsWith('/thank-you')) {
+        return (
+          options.thankYou ?? (() => errorResponse('UNKNOWN', 'missing'))
+        )();
+      }
+      if (url.includes('/help-confirmations') && method === 'POST') {
+        return (
+          options.confirmHelp ?? (() => errorResponse('UNKNOWN', 'missing'))
         )();
       }
       if (url.includes('/responses/advice') && method === 'POST') {
@@ -897,5 +912,277 @@ describe('FC-012 request help', () => {
     expect(styles).toContain('overflow-x: hidden');
     expect(styles).toContain('@media (max-width: 390px)');
     await expectAccessible(container);
+  });
+
+  it('lets the request owner confirm eligible help and records +1 confirmed help', async () => {
+    const user = userEvent.setup({ delay: null });
+    const ownerMeta = {
+      id: null,
+      outcome: null,
+      creditedResponseId: null,
+      canConfirm: true,
+      canUpdate: false,
+      hasContribution: false,
+      hasThankYou: false,
+      canThank: false,
+    };
+    await renderHelp(
+      {
+        thread: threadPayload([adviceCard({ helpConfirmation: ownerMeta })]),
+        request: { ...publishedRequest, author: ownerAuthor, responseCount: 1 },
+        confirmHelp: () =>
+          response({
+            confirmation: {
+              id: 'hc-1',
+              requestId: 'req-live',
+              outcome: 'HELPED',
+              creditedResponseId: 'res-advice',
+              helper: helperAuthor,
+              topicIds: ['topic-gtm'],
+              hasContribution: true,
+              hasThankYou: false,
+              canThank: true,
+            },
+          }),
+      },
+      'user-owner',
+    );
+    expect(
+      await screen.findByRole('button', { name: 'Confirm help' }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: 'I can help' }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Confirm help' }));
+    expect(
+      screen.getByText(/Did Chaitanya’s help move you forward/i),
+    ).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Yes — this helped' }));
+    await user.click(screen.getByRole('checkbox', { name: 'GTM' }));
+    await user.click(screen.getByRole('button', { name: 'Skip note' }));
+    expect(await screen.findByText('+1 confirmed help')).toBeVisible();
+    expect(screen.queryByText('+1 founder helped')).not.toBeInTheDocument();
+    expect(screen.getByText('Recognized for')).toBeVisible();
+    expect(
+      screen.getByRole('link', { name: 'View reputation' }),
+    ).toHaveAttribute('href', '/reputation');
+  });
+
+  it('hides confirm controls from helpers and shows Help confirmed after HELPED', async () => {
+    await renderHelp({
+      thread: threadPayload(
+        [
+          adviceCard({
+            helpConfirmation: null,
+          }),
+        ],
+        { canOfferHelp: false, viewerResponseTypes: ['ADVICE'] },
+      ),
+    });
+    expect(
+      screen.queryByRole('button', { name: 'Confirm help' }),
+    ).not.toBeInTheDocument();
+
+    cleanup();
+    vi.unstubAllGlobals();
+    await renderHelp(
+      {
+        thread: threadPayload([
+          adviceCard({
+            helpConfirmation: {
+              id: 'hc-1',
+              outcome: 'HELPED',
+              creditedResponseId: 'res-advice',
+              canConfirm: false,
+              canUpdate: false,
+              hasContribution: true,
+              hasThankYou: false,
+              canThank: true,
+            },
+          }),
+        ]),
+        request: { ...publishedRequest, author: ownerAuthor, responseCount: 1 },
+      },
+      'user-owner',
+    );
+    expect(await screen.findByText('Help confirmed')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Add thank-you' })).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: 'Confirm help' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('acknowledges still talking without claiming reputation', async () => {
+    const user = userEvent.setup({ delay: null });
+    await renderHelp(
+      {
+        thread: threadPayload([
+          adviceCard({
+            helpConfirmation: {
+              id: null,
+              outcome: null,
+              creditedResponseId: null,
+              canConfirm: true,
+              canUpdate: false,
+              hasContribution: false,
+              hasThankYou: false,
+              canThank: false,
+            },
+          }),
+        ]),
+        request: { ...publishedRequest, author: ownerAuthor, responseCount: 1 },
+        confirmHelp: () =>
+          response({
+            confirmation: {
+              id: 'hc-still',
+              requestId: 'req-live',
+              outcome: 'STILL_TALKING',
+              creditedResponseId: 'res-advice',
+              helper: helperAuthor,
+              topicIds: [],
+              hasContribution: false,
+              hasThankYou: false,
+              canThank: false,
+            },
+          }),
+      },
+      'user-owner',
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Confirm help' }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'We’re still talking' }),
+    );
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(
+      await screen.findByText('Recorded — you can update this later.'),
+    ).toBeVisible();
+    expect(screen.queryByText('+1 confirmed help')).not.toBeInTheDocument();
+  });
+
+  it('keeps confirm-sheet drafts after a recoverable error and records not-helpful privately', async () => {
+    const user = userEvent.setup({ delay: null });
+    let failOnce = true;
+    await renderHelp(
+      {
+        thread: threadPayload([
+          adviceCard({
+            helpConfirmation: {
+              id: null,
+              outcome: null,
+              creditedResponseId: null,
+              canConfirm: true,
+              canUpdate: false,
+              hasContribution: false,
+              hasThankYou: false,
+              canThank: false,
+            },
+          }),
+        ]),
+        request: { ...publishedRequest, author: ownerAuthor, responseCount: 1 },
+        confirmHelp: () => {
+          if (failOnce) {
+            failOnce = false;
+            return errorResponse(
+              'HELP_CONFIRMATION_INVALID_INPUT',
+              'Review the help confirmation and try again.',
+              400,
+              { topicIds: ['Choose topics from this request.'] },
+            );
+          }
+          return response({
+            confirmation: {
+              id: 'hc-1',
+              requestId: 'req-live',
+              outcome: 'HELPED',
+              creditedResponseId: 'res-advice',
+              helper: helperAuthor,
+              topicIds: ['topic-gtm'],
+              hasContribution: true,
+              hasThankYou: false,
+              canThank: true,
+            },
+          });
+        },
+        thankYou: () =>
+          errorResponse(
+            'THANK_YOU_ALREADY_EXISTS',
+            'A thank-you note already exists for this contribution.',
+            409,
+          ),
+      },
+      'user-owner',
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Confirm help' }),
+    );
+    await user.click(screen.getByRole('checkbox', { name: 'GTM' }));
+    await user.type(
+      screen.getByLabelText(/Add a thank-you note/i),
+      '<script>alert(1)</script>',
+    );
+    const sheet = screen.getByRole('dialog', { name: /Confirm help/i });
+    await user.click(
+      within(sheet).getByRole('button', { name: 'Confirm help' }),
+    );
+    expect(
+      await screen.findByText('Review the help confirmation and try again.'),
+    ).toBeVisible();
+    expect(screen.getByRole('checkbox', { name: 'GTM' })).toBeChecked();
+    expect(screen.getByLabelText(/Add a thank-you note/i)).toHaveValue(
+      '<script>alert(1)</script>',
+    );
+    expect(document.querySelector('script')).toBeNull();
+
+    cleanup();
+    vi.unstubAllGlobals();
+    const later = userEvent.setup({ delay: null });
+    await renderHelp(
+      {
+        thread: threadPayload([
+          adviceCard({
+            helpConfirmation: {
+              id: null,
+              outcome: null,
+              creditedResponseId: null,
+              canConfirm: true,
+              canUpdate: false,
+              hasContribution: false,
+              hasThankYou: false,
+              canThank: false,
+            },
+          }),
+        ]),
+        request: { ...publishedRequest, author: ownerAuthor, responseCount: 1 },
+        confirmHelp: () =>
+          response({
+            confirmation: {
+              id: 'hc-not',
+              requestId: 'req-live',
+              outcome: 'NOT_HELPFUL',
+              creditedResponseId: 'res-advice',
+              helper: helperAuthor,
+              topicIds: [],
+              hasContribution: false,
+              hasThankYou: false,
+              canThank: false,
+            },
+          }),
+      },
+      'user-owner',
+    );
+    await later.click(
+      await screen.findByRole('button', { name: 'Confirm help' }),
+    );
+    await later.click(screen.getByRole('button', { name: 'No / not yet' }));
+    await later.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(
+      await screen.findByText(
+        'Recorded — this does not affect their public reputation.',
+      ),
+    ).toBeVisible();
+    expect(screen.queryByText('+1 confirmed help')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /confirm-help/i })).toBeNull();
   });
 });
