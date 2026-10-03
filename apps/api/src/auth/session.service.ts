@@ -61,7 +61,7 @@ export class SessionService {
     return { rawToken, expiresAt };
   }
 
-  async authenticate(rawToken: string | undefined): Promise<AuthPrincipal> {
+  async inspect(rawToken: string | undefined) {
     if (!rawToken || !SESSION_TOKEN_PATTERN.test(rawToken)) {
       throw this.expiredError();
     }
@@ -83,11 +83,35 @@ export class SessionService {
     if (!session || session.revokedAt || session.expiresAt <= now) {
       throw this.expiredError();
     }
-    if (
-      session.user.status !== 'ACTIVE' ||
-      session.user.deletedAt ||
-      (session.user.suspendedUntil && session.user.suspendedUntil > now)
-    ) {
+
+    return {
+      sessionId: session.id,
+      user: session.user,
+    };
+  }
+
+  async authenticate(rawToken: string | undefined): Promise<AuthPrincipal> {
+    const session = await this.inspect(rawToken);
+    const now = new Date();
+    const suspended =
+      session.user.status === 'SUSPENDED' ||
+      Boolean(session.user.suspendedUntil && session.user.suspendedUntil > now);
+
+    if (session.user.deletedAt) {
+      throw new ApiError(
+        AUTH_ERROR_CODES.forbidden,
+        'This account cannot access the service.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    if (suspended) {
+      throw new ApiError(
+        AUTH_ERROR_CODES.accountSuspended,
+        'Your account is suspended.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    if (session.user.status !== 'ACTIVE') {
       throw new ApiError(
         AUTH_ERROR_CODES.forbidden,
         'This account cannot access the service.',
@@ -96,12 +120,12 @@ export class SessionService {
     }
 
     return {
-      sessionId: session.id,
+      sessionId: session.sessionId,
       user: {
         id: session.user.id,
         email: session.user.email,
         emailVerifiedAt: session.user.emailVerifiedAt,
-        status: session.user.status,
+        status: 'ACTIVE',
         onboardingCompletedAt: session.user.onboardingCompletedAt,
         application: session.user.application,
       },

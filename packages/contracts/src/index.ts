@@ -8,6 +8,7 @@ export const AUTH_ERROR_CODES = {
   resetTokenExpired: 'RESET_TOKEN_EXPIRED',
   resetTokenInvalid: 'RESET_TOKEN_INVALID',
   sessionExpired: 'AUTH_SESSION_EXPIRED',
+  accountSuspended: 'AUTH_ACCOUNT_SUSPENDED',
   verifyTokenExpired: 'VERIFY_TOKEN_EXPIRED',
   verifyTokenInvalid: 'VERIFY_TOKEN_INVALID',
 } as const;
@@ -19,7 +20,8 @@ export type AuthAccessState =
   | 'VERIFY_EMAIL'
   | 'APPLICATION'
   | 'ONBOARDING'
-  | 'ACTIVE';
+  | 'ACTIVE'
+  | 'SUSPENDED';
 
 export type SignupRequest = {
   email: string;
@@ -58,7 +60,7 @@ export type SafeUser = {
   id: string;
   email: string;
   emailVerified: boolean;
-  status: 'ACTIVE';
+  status: 'ACTIVE' | 'SUSPENDED';
 };
 
 export type AuthSessionResponse = {
@@ -73,6 +75,8 @@ export type AuthSessionResponse = {
       | 'REJECTED'
       | null;
     onboardingCompleted: boolean;
+    suspensionReason?: string | null;
+    suspendedUntil?: string | null;
   };
 };
 
@@ -154,6 +158,9 @@ export const ADMIN_PERMISSIONS = {
   applicationsNeedsInfo: 'admin.applications.needs_info',
   applicationsApprove: 'admin.applications.approve',
   applicationsReject: 'admin.applications.reject',
+  reportsRead: 'admin.reports.read',
+  reportsModerate: 'admin.reports.moderate',
+  membersSuspend: 'admin.members.suspend',
 } as const;
 
 export type AdminPermission =
@@ -942,6 +949,177 @@ export type ChangePasswordRequest = {
 export type ChangePasswordResponse = {
   changed: true;
   revokedSessionCount: number;
+};
+
+export const SAFETY_ERROR_CODES = {
+  invalidInput: 'SAFETY_INVALID_INPUT',
+  targetNotFound: 'SAFETY_TARGET_NOT_FOUND',
+  notAllowed: 'SAFETY_NOT_ALLOWED',
+  rateLimited: 'SAFETY_RATE_LIMITED',
+  reportNotFound: 'SAFETY_REPORT_NOT_FOUND',
+  invalidState: 'SAFETY_INVALID_STATE',
+} as const;
+
+export type SafetyErrorCode =
+  (typeof SAFETY_ERROR_CODES)[keyof typeof SAFETY_ERROR_CODES];
+
+export const SAFETY_LIMITS = {
+  detailsMax: 500,
+  reportWindowSeconds: 15 * 60,
+  reportsPerWindow: 10,
+  pageSizeDefault: 20,
+  pageSizeMax: 50,
+  pageMax: 10_000,
+} as const;
+
+export const SAFETY_AUDIT_ACTIONS = {
+  messageEvidenceViewed: 'SAFETY_MESSAGE_EVIDENCE_VIEWED',
+} as const;
+
+export const REPORT_REASON_CODES = {
+  spamPromotion: 'SPAM_PROMOTION',
+  fraudImpersonation: 'FRAUD_IMPERSONATION',
+  harassmentAbuse: 'HARASSMENT_ABUSE',
+  unsafePolicy: 'UNSAFE_POLICY',
+  other: 'OTHER',
+} as const;
+
+export type ReportReasonCode =
+  (typeof REPORT_REASON_CODES)[keyof typeof REPORT_REASON_CODES];
+
+export const REPORT_REASON_LABELS = {
+  SPAM_PROMOTION: 'Spam or unwanted promotion',
+  FRAUD_IMPERSONATION: 'Fraud or impersonation',
+  HARASSMENT_ABUSE: 'Harassment or abuse',
+  UNSAFE_POLICY: 'Unsafe / policy violation',
+  OTHER: 'Other',
+} as const satisfies Record<ReportReasonCode, string>;
+
+export const REPORT_TARGET_TYPES = {
+  user: 'USER',
+  request: 'REQUEST',
+  response: 'RESPONSE',
+  message: 'MESSAGE',
+} as const;
+
+export type ReportTargetType =
+  (typeof REPORT_TARGET_TYPES)[keyof typeof REPORT_TARGET_TYPES];
+
+export const REPORT_STATUSES = {
+  open: 'OPEN',
+  underReview: 'UNDER_REVIEW',
+  dismissed: 'DISMISSED',
+  enforced: 'ENFORCED',
+} as const;
+
+export type ReportStatus =
+  (typeof REPORT_STATUSES)[keyof typeof REPORT_STATUSES];
+
+export type CreateReportRequest = {
+  targetType: ReportTargetType;
+  targetId: string;
+  reasonCode: ReportReasonCode;
+  details?: string;
+};
+
+export type MemberReportCreatedResponse = {
+  report: {
+    id: string;
+    status: 'OPEN';
+  };
+};
+
+export type BlockedFounder = {
+  id: string;
+  displayName: string;
+  companyName: string;
+  blockedAt: string;
+};
+
+export type BlockedFoundersResponse = {
+  founders: BlockedFounder[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export type BlockMutationResponse = {
+  blocked: boolean;
+  userId: string;
+};
+
+export type AdminReportQueueItem = {
+  id: string;
+  status: ReportStatus;
+  targetType: ReportTargetType;
+  targetId: string;
+  reasonCode: ReportReasonCode;
+  createdAt: string;
+};
+
+export type AdminReportQueueResponse = {
+  reports: AdminReportQueueItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  status: ReportStatus | null;
+};
+
+export type AdminReportEvidence =
+  | {
+      kind: 'USER';
+      userId: string;
+      displayName: string;
+      companyName: string | null;
+      status: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+    }
+  | {
+      kind: 'REQUEST';
+      requestId: string;
+      headline: string;
+      status: string;
+      authorId: string;
+    }
+  | {
+      kind: 'RESPONSE';
+      responseId: string;
+      requestId: string;
+      type: string;
+      deletedAt: string | null;
+      authorId: string;
+    }
+  | {
+      kind: 'MESSAGE';
+      messageId: string;
+      conversationId: string;
+      sender: {
+        id: string;
+        displayName: string;
+      };
+      createdAt: string;
+      deletedAt: string | null;
+      body: string;
+    };
+
+export type AdminReportDetail = {
+  id: string;
+  status: ReportStatus;
+  targetType: ReportTargetType;
+  targetId: string;
+  reasonCode: ReportReasonCode;
+  details: string | null;
+  createdAt: string;
+  reporter: {
+    id: string;
+    displayName: string;
+  };
+  evidence: AdminReportEvidence;
+};
+
+export type AdminReportDetailResponse = {
+  report: AdminReportDetail;
 };
 
 export const HELP_OUTCOMES = {

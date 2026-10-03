@@ -17,6 +17,8 @@ import {
   sendConversationMessage,
 } from '../member/member-api';
 import { initialsFrom, requestAuthorMeta } from '../member/member-format';
+import { BlockSheet } from '../safety/block-sheet';
+import { ReportSheet } from '../safety/report-sheet';
 
 function locationMeta(counterpart: {
   companyName: string;
@@ -48,6 +50,9 @@ export function MessagesClient({
   const lastAttemptBody = useRef('');
   const [inbox, setInbox] = useState<MemberConversationsResponse | null>(null);
   const [query, setQuery] = useState('');
+  const [safety, setSafety] = useState<
+    { type: 'USER' | 'MESSAGE'; id: string } | 'block' | null
+  >(null);
   const [search, setSearch] = useState('');
   const [conversation, setConversation] = useState<MemberConversation | null>(
     null,
@@ -286,12 +291,30 @@ export function MessagesClient({
                     </p>
                   </div>
                   {counterpart ? (
-                    <a
-                      className="fc-button fc-button--medium fc-button--secondary"
-                      href={`/founders/${counterpart.id}`}
-                    >
-                      View profile
-                    </a>
+                    <>
+                      <a
+                        className="fc-button fc-button--medium fc-button--secondary"
+                        href={`/founders/${counterpart.id}`}
+                      >
+                        View profile
+                      </a>
+                      <Button
+                        onClick={() =>
+                          setSafety({ type: 'USER', id: counterpart.id })
+                        }
+                        type="button"
+                        variant="secondary"
+                      >
+                        Report founder
+                      </Button>
+                      <Button
+                        onClick={() => setSafety('block')}
+                        type="button"
+                        variant="secondary"
+                      >
+                        Block founder
+                      </Button>
+                    </>
                   ) : null}
                 </header>
 
@@ -337,6 +360,17 @@ export function MessagesClient({
                         ) : (
                           <p>{message.body}</p>
                         )}
+                        {!mine ? (
+                          <button
+                            className="fc-safety-text-action"
+                            onClick={() =>
+                              setSafety({ type: 'MESSAGE', id: message.id })
+                            }
+                            type="button"
+                          >
+                            Report message
+                          </button>
+                        ) : null}
                       </li>
                     );
                   })}
@@ -380,6 +414,32 @@ export function MessagesClient({
           )}
         </section>
       </div>
+      <ReportSheet
+        onClose={() => setSafety(null)}
+        open={typeof safety === 'object' && safety?.type === 'USER'}
+        targetId={
+          typeof safety === 'object' && safety?.type === 'USER' ? safety.id : ''
+        }
+        targetType="USER"
+      />
+      <ReportSheet
+        onClose={() => setSafety(null)}
+        open={typeof safety === 'object' && safety?.type === 'MESSAGE'}
+        targetId={
+          typeof safety === 'object' && safety?.type === 'MESSAGE'
+            ? safety.id
+            : ''
+        }
+        targetType="MESSAGE"
+      />
+      {counterpart ? (
+        <BlockSheet
+          founderId={counterpart.id}
+          founderName={counterpart.displayName}
+          onClose={() => setSafety(null)}
+          open={safety === 'block'}
+        />
+      ) : null}
     </div>
   );
 }

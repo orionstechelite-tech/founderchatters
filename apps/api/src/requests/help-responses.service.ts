@@ -19,6 +19,7 @@ import type { Prisma } from '../../../../generated/prisma/client.js';
 
 import { PrismaService } from '../database/prisma.service.js';
 import { ApiError } from '../http/api-error.js';
+import { areMembersBlocked } from '../safety/block-access.js';
 import { NotificationWriterService } from '../notifications/notification-writer.service.js';
 import {
   helpNotAllowed,
@@ -575,17 +576,7 @@ export class HelpResponsesService {
     rightId: string,
     tx: Prisma.TransactionClient | PrismaService = this.prisma,
   ): Promise<boolean> {
-    if (leftId === rightId) return false;
-    const row = await tx.block.findFirst({
-      where: {
-        OR: [
-          { blockerId: leftId, blockedId: rightId },
-          { blockerId: rightId, blockedId: leftId },
-        ],
-      },
-      select: { blockerId: true },
-    });
-    return Boolean(row);
+    return areMembersBlocked(tx, leftId, rightId);
   }
 
   private async ownerConfirmations(

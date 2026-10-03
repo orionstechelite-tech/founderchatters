@@ -3850,3 +3850,165 @@ a.fc-button {
     right: -2px;
   }
 }
+
+.fc-safety-overlay {
+  background: rgb(16 17 15 / 28%);
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 20px 12px 32px;
+  position: fixed;
+  z-index: 40;
+}
+
+.fc-safety-sheet {
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 24px;
+  display: grid;
+  gap: 16px;
+  margin: 0 auto;
+  max-width: 390px;
+  padding: 20px;
+}
+
+.fc-safety-sheet__top {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.fc-safety-kicker,
+.fc-safety-sheet h2,
+.fc-safety-sheet p {
+  margin: 0;
+}
+
+.fc-safety-sheet h2 {
+  font: 600 32px/1.12 var(--fc-font-sans);
+}
+
+.fc-safety-close,
+.fc-safety-reason,
+.fc-safety-text-action,
+.fc-safety-sheet .fc-button {
+  min-height: 44px;
+}
+
+.fc-safety-close {
+  background: transparent;
+  border: 0;
+  color: var(--fc-color-text-secondary);
+  font: 600 24px/1 var(--fc-font-sans);
+}
+
+.fc-safety-reasons {
+  display: grid;
+  gap: 8px;
+}
+
+.fc-safety-reason {
+  background: var(--fc-color-page);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 12px;
+  padding: 12px 13px;
+  text-align: left;
+}
+
+.fc-safety-reason[aria-pressed='true'] {
+  border-color: var(--fc-color-inverse);
+}
+
+.fc-safety-effects {
+  background: var(--fc-color-page);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 12px;
+  display: grid;
+  gap: 6px;
+  padding: 13px;
+}
+
+.fc-safety-success,
+.fc-safety-text-action {
+  color: var(--fc-color-text-secondary);
+}
+
+.fc-safety-text-action {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+}
+
+.fc-suspended {
+  display: grid;
+  gap: 18px;
+  margin: 0 auto;
+  max-width: 390px;
+  overflow-x: hidden;
+  padding: 24px 20px 40px;
+}
+
+.fc-suspended h1 {
+  font: 600 36px/1.12 var(--fc-font-sans);
+  margin: 0;
+}
+
+.fc-suspended-card {
+  background: var(--fc-color-page);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 16px;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.fc-suspended-note {
+  color: var(--fc-color-text-secondary);
+  font-size: 13px;
+}
+
+.fc-admin-report-list {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fc-admin-report-list a {
+  display: grid;
+  gap: 4px;
+  min-height: 44px;
+}
+
+.fc-admin-reported-message {
+  display: grid;
+  gap: 8px;
+}
+
+.fc-admin-report-body {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.fc-admin-report-note {
+  color: var(--fc-color-text-secondary);
+  font-size: 13px;
+}
+
+@media (max-width: 390px) {
+  .fc-safety-overlay,
+  .fc-suspended {
+    overflow-x: hidden;
+  }
+
+  .fc-safety-reason,
+  .fc-safety-close,
+  .fc-safety-sheet .fc-button,
+  .fc-suspended .fc-button {
+    min-height: 44px;
+  }
+}

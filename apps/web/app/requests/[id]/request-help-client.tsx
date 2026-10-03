@@ -25,6 +25,7 @@ import {
   declineIntroduction,
   listRequestResponses,
 } from '../../member/member-api';
+import { ReportSheet } from '../../safety/report-sheet';
 import { ConfirmHelpSheet } from './confirm-help-sheet';
 
 type ConfirmAction = 'consent' | 'decline' | 'cancel' | null;
@@ -46,9 +47,11 @@ function typeLabel(type: ResponseType): string {
 export function RequestHelpThread({
   request,
   isOwner,
+  viewerId,
 }: {
   request: MemberRequest;
   isOwner: boolean;
+  viewerId?: string;
 }) {
   const router = useRouter();
   const chooserTitleId = useId();
@@ -75,6 +78,7 @@ export function RequestHelpThread({
     action: ConfirmAction;
     introductionId: string;
   } | null>(null);
+  const [reportResponseId, setReportResponseId] = useState<string | null>(null);
   const [confirmHelp, setConfirmHelp] = useState<{
     response: MemberHelpResponse;
     mode: 'confirm' | 'update' | 'thank';
@@ -414,6 +418,17 @@ export function RequestHelpThread({
                     ) : null}
                   </div>
                 ) : null}
+                {response.author && response.author.id !== viewerId ? (
+                  <div className="fc-help-card__actions">
+                    <Button
+                      onClick={() => setReportResponseId(response.id)}
+                      type="button"
+                      variant="secondary"
+                    >
+                      Report response
+                    </Button>
+                  </div>
+                ) : null}
               </li>
             );
           })}
@@ -689,6 +704,12 @@ export function RequestHelpThread({
           response={confirmHelp.response}
         />
       ) : null}
+      <ReportSheet
+        onClose={() => setReportResponseId(null)}
+        open={Boolean(reportResponseId)}
+        targetId={reportResponseId ?? ''}
+        targetType="RESPONSE"
+      />
     </div>
   );
 }

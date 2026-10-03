@@ -126,11 +126,24 @@ export class AuthService {
     }
 
     const now = new Date();
+    if (user.deletedAt) {
+      throw new ApiError(
+        AUTH_ERROR_CODES.forbidden,
+        'This account cannot access the service.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
     if (
-      user.status !== 'ACTIVE' ||
-      user.deletedAt ||
+      user.status === 'SUSPENDED' ||
       (user.suspendedUntil && user.suspendedUntil > now)
     ) {
+      throw new ApiError(
+        AUTH_ERROR_CODES.accountSuspended,
+        'Your account is suspended.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    if (user.status !== 'ACTIVE') {
       throw new ApiError(
         AUTH_ERROR_CODES.forbidden,
         'This account cannot access the service.',
@@ -156,7 +169,46 @@ export class AuthService {
   }
 
   async session(rawToken: string | undefined): Promise<AuthSessionResponse> {
-    return this.toResponse(await this.sessions.authenticate(rawToken));
+    const inspected = await this.sessions.inspect(rawToken);
+    const now = new Date();
+    if (inspected.user.deletedAt) {
+      throw new ApiError(
+        AUTH_ERROR_CODES.forbidden,
+        'This account cannot access the service.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    if (
+      inspected.user.status === 'SUSPENDED' ||
+      (inspected.user.suspendedUntil && inspected.user.suspendedUntil > now)
+    ) {
+      return {
+        user: {
+          id: inspected.user.id,
+          email: inspected.user.email,
+          emailVerified: Boolean(inspected.user.emailVerifiedAt),
+          status: 'SUSPENDED',
+        },
+        access: {
+          state: 'SUSPENDED',
+          applicationStatus: inspected.user.application?.status ?? null,
+          onboardingCompleted: Boolean(inspected.user.onboardingCompletedAt),
+          suspensionReason: inspected.user.suspensionReason,
+          suspendedUntil: inspected.user.suspendedUntil?.toISOString() ?? null,
+        },
+      };
+    }
+    return this.toResponse({
+      sessionId: inspected.sessionId,
+      user: {
+        id: inspected.user.id,
+        email: inspected.user.email,
+        emailVerifiedAt: inspected.user.emailVerifiedAt,
+        status: 'ACTIVE',
+        onboardingCompletedAt: inspected.user.onboardingCompletedAt,
+        application: inspected.user.application,
+      },
+    });
   }
 
   signout(rawToken: string | undefined): Promise<void> {

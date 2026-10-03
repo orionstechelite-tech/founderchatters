@@ -370,7 +370,12 @@ describe('founder application HTTP integration', () => {
       const response = await request('/v1/application/me', blocked.cookie);
       expect(response.status).toBe(403);
       await expect(response.json()).resolves.toMatchObject({
-        error: { code: 'AUTH_FORBIDDEN' },
+        error: {
+          code:
+            status === 'SUSPENDED'
+              ? 'AUTH_ACCOUNT_SUSPENDED'
+              : 'AUTH_FORBIDDEN',
+        },
       });
     }
   });

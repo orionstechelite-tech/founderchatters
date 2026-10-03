@@ -564,7 +564,7 @@ describe('AuthService', () => {
         {} as PrismaService,
         {} as PasswordHasher,
         {
-          authenticate: vi.fn().mockResolvedValue({
+          inspect: vi.fn().mockResolvedValue({
             sessionId: 'session-1',
             user: {
               id: 'user-1',
@@ -593,7 +593,7 @@ describe('AuthService', () => {
       {} as PrismaService,
       {} as PasswordHasher,
       {
-        authenticate: vi.fn().mockResolvedValue({
+        inspect: vi.fn().mockResolvedValue({
           sessionId: 'session-1',
           user: {
             id: 'user-1',
@@ -623,7 +623,7 @@ describe('AuthService', () => {
       {} as PrismaService,
       {} as PasswordHasher,
       {
-        authenticate: vi.fn().mockResolvedValue({
+        inspect: vi.fn().mockResolvedValue({
           sessionId: 'session-1',
           user: {
             id: 'user-1',
@@ -644,6 +644,39 @@ describe('AuthService', () => {
         state: 'ACTIVE',
         applicationStatus: 'APPROVED',
         onboardingCompleted: true,
+      },
+    });
+  });
+
+  it('maps a suspended account to session access state SUSPENDED', async () => {
+    const service = new AuthService(
+      {} as PrismaService,
+      {} as PasswordHasher,
+      {
+        inspect: vi.fn().mockResolvedValue({
+          sessionId: 'session-1',
+          user: {
+            id: 'user-1',
+            email: 'founder@example.com',
+            emailVerifiedAt: new Date('2026-09-28T00:00:00.000Z'),
+            status: 'SUSPENDED',
+            suspensionReason: 'POLICY_VIOLATION',
+            suspendedUntil: null,
+            onboardingCompletedAt: new Date('2026-09-28T00:00:00.000Z'),
+            application: { status: 'APPROVED' },
+          },
+        }),
+      } as unknown as SessionService,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(service.session('raw-token')).resolves.toMatchObject({
+      user: { status: 'SUSPENDED' },
+      access: {
+        state: 'SUSPENDED',
+        suspensionReason: 'POLICY_VIOLATION',
+        suspendedUntil: null,
       },
     });
   });
@@ -832,7 +865,7 @@ describe('SessionService', () => {
       config(),
     );
     await expect(service.authenticate('A'.repeat(43))).rejects.toMatchObject({
-      code: 'AUTH_FORBIDDEN',
+      code: 'AUTH_ACCOUNT_SUSPENDED',
       status: 403,
     });
   });

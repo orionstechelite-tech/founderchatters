@@ -141,7 +141,9 @@ export function AdminShell({
               href={
                 item === 'Applications'
                   ? '/admin/applications'
-                  : `#${item.toLowerCase().replace(' ', '-')}`
+                  : item === 'Moderation'
+                    ? '/admin/reports'
+                    : `#${item.toLowerCase().replace(' ', '-')}`
               }
               key={item}
             >
