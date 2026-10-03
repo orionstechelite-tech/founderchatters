@@ -860,6 +860,90 @@ export type MarkAllNotificationsReadResponse = {
   updatedCount: number;
 };
 
+export const SETTINGS_ERROR_CODES = {
+  invalidInput: 'SETTINGS_INVALID_INPUT',
+  profileUnavailable: 'SETTINGS_PROFILE_UNAVAILABLE',
+  sessionNotFound: 'SETTINGS_SESSION_NOT_FOUND',
+  currentSession: 'SETTINGS_CURRENT_SESSION',
+  currentPasswordInvalid: 'SETTINGS_CURRENT_PASSWORD_INVALID',
+} as const;
+
+export type SettingsErrorCode =
+  (typeof SETTINGS_ERROR_CODES)[keyof typeof SETTINGS_ERROR_CODES];
+
+export const SETTINGS_LIMITS = {
+  displayName: 100,
+  companyName: 120,
+  city: 100,
+  country: 100,
+  headline: 160,
+  bio: 1000,
+  passwordMin: 12,
+  passwordMax: 128,
+} as const;
+
+export type MemberProfileSettings = {
+  displayName: string;
+  companyName: string;
+  city: string | null;
+  country: string | null;
+  headline: string | null;
+  bio: string | null;
+};
+
+export type MemberProfileSettingsResponse = {
+  profile: MemberProfileSettings;
+};
+
+export type UpdateMemberProfileSettingsRequest = {
+  displayName?: string;
+  companyName?: string;
+  city?: string | null;
+  country?: string | null;
+  headline?: string | null;
+  bio?: string | null;
+};
+
+export type MemberAccountSettingsResponse = {
+  account: {
+    email: string;
+    emailVerified: boolean;
+    status: 'ACTIVE';
+  };
+};
+
+export type MemberSession = {
+  id: string;
+  userAgent: string | null;
+  createdAt: string;
+  expiresAt: string;
+  current: boolean;
+};
+
+export type MemberSessionsResponse = {
+  sessions: MemberSession[];
+};
+
+export type SessionRevokedResponse = {
+  sessionId: string;
+  revoked: true;
+};
+
+export type OtherSessionsRevokedResponse = {
+  revokedCount: number;
+};
+
+export type ChangePasswordRequest = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
+export type ChangePasswordResponse = {
+  changed: true;
+  revokedSessionCount: number;
+};
+
 export const HELP_OUTCOMES = {
   helped: 'HELPED',
   stillTalking: 'STILL_TALKING',

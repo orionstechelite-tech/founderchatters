@@ -3285,3 +3285,568 @@ a.fc-button {
     font-size: 27px;
   }
 }
+
+/* FC-016 — Settings, privacy, and security */
+
+.fc-member-menu-wrap {
+  position: relative;
+}
+
+.fc-member-menu-popover {
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 14px;
+  box-shadow: 0 14px 36px rgb(16 17 15 / 0.12);
+  display: grid;
+  min-width: 180px;
+  overflow: hidden;
+  padding: 6px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 40;
+}
+
+.fc-member-menu-popover a,
+.fc-member-menu-popover button {
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: var(--fc-color-text);
+  cursor: pointer;
+  font: 500 13px/1.3 var(--fc-font-sans);
+  min-height: 44px;
+  padding: 11px 12px;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+}
+
+.fc-member-menu-popover a:hover,
+.fc-member-menu-popover button:hover {
+  background: var(--fc-color-page);
+}
+
+.fc-member-menu-popover a:focus-visible,
+.fc-member-menu-popover button:focus-visible {
+  outline: 2px solid var(--fc-color-text);
+  outline-offset: 1px;
+}
+
+.fc-settings {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.fc-settings-hero {
+  margin-bottom: 38px;
+}
+
+.fc-settings-mobile-title {
+  display: none;
+}
+
+.fc-settings-desktop-kicker {
+  margin: 0 0 12px;
+}
+
+.fc-settings-desktop-title {
+  font: 400 48px/1 var(--fc-font-serif);
+  margin: 0;
+}
+
+.fc-settings-layout {
+  align-items: start;
+  display: grid;
+  gap: 36px;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-width: 0;
+}
+
+.fc-settings-nav {
+  background: var(--fc-color-page);
+  border-radius: 24px;
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+}
+
+.fc-settings-nav__item {
+  align-items: center;
+  border-radius: 12px;
+  color: var(--fc-color-text-secondary);
+  display: flex;
+  font: 500 14px/1.3 var(--fc-font-sans);
+  min-height: 48px;
+  padding: 12px 14px;
+  text-decoration: none;
+}
+
+.fc-settings-nav__item[aria-current='page'] {
+  background: var(--fc-color-surface);
+  color: var(--fc-color-text);
+  font-weight: 700;
+}
+
+.fc-settings-nav__item:focus-visible {
+  outline: 2px solid var(--fc-color-text);
+  outline-offset: 2px;
+}
+
+.fc-settings-panel {
+  border: 1px solid var(--fc-color-border);
+  border-radius: 24px;
+  min-height: 650px;
+  min-width: 0;
+  padding: 26px 28px;
+}
+
+.fc-settings-section-header {
+  margin-bottom: 28px;
+}
+
+.fc-settings-section-header > .fc-label {
+  margin: 0 0 10px;
+}
+
+.fc-settings-section-header h2 {
+  font: 600 30px/1.15 var(--fc-font-sans);
+  margin: 0;
+}
+
+.fc-settings-section-header > p:last-child {
+  color: var(--fc-color-text-secondary);
+  font: 400 14px/1.45 var(--fc-font-sans);
+  margin: 8px 0 0;
+  max-width: 760px;
+}
+
+.fc-settings-profile-form {
+  display: grid;
+  gap: 18px;
+}
+
+.fc-settings-profile-form .fc-field {
+  align-items: start;
+  display: grid;
+  gap: 8px 24px;
+  grid-template-columns: 165px minmax(0, 1fr);
+  max-width: none;
+  width: 100%;
+}
+
+.fc-settings-profile-form .fc-field__label {
+  grid-column: 1;
+  padding-top: 14px;
+}
+
+.fc-settings-profile-form .fc-field__control {
+  grid-column: 2;
+  max-width: none;
+  width: 100%;
+}
+
+.fc-settings-profile-form .fc-field__message {
+  grid-column: 2;
+  margin: 0;
+}
+
+.fc-settings-profile-form textarea.fc-field__control {
+  min-height: 118px;
+}
+
+.fc-settings-form-actions {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  margin-left: 189px;
+  margin-top: 2px;
+}
+
+.fc-settings-form-actions .fc-button {
+  min-height: 44px;
+  min-width: 150px;
+}
+
+.fc-settings-save-status {
+  color: var(--fc-color-text-secondary);
+  font: 500 13px/1.4 var(--fc-font-sans);
+}
+
+.fc-settings-error {
+  color: var(--fc-color-error);
+  font: 500 13px/1.4 var(--fc-font-sans);
+  margin: 0 0 16px;
+}
+
+.fc-settings-status {
+  color: var(--fc-color-text-secondary);
+  font: 400 14px/1.45 var(--fc-font-sans);
+}
+
+.fc-settings-detail-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.fc-settings-detail-list > div {
+  align-items: start;
+  border-bottom: 1px solid var(--fc-color-border);
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(140px, 190px) minmax(0, 1fr);
+  padding: 18px 0;
+}
+
+.fc-settings-detail-list dt {
+  color: var(--fc-color-text-secondary);
+  font: 600 13px/1.35 var(--fc-font-sans);
+}
+
+.fc-settings-detail-list dd {
+  font: 500 15px/1.4 var(--fc-font-sans);
+  margin: 0;
+}
+
+.fc-settings-note {
+  background: var(--fc-color-page);
+  border-radius: 14px;
+  color: var(--fc-color-text-secondary);
+  font: 400 13px/1.5 var(--fc-font-sans);
+  margin-top: 28px;
+  padding: 16px;
+}
+
+.fc-settings-card,
+.fc-settings-policy-card,
+.fc-settings-empty-card {
+  border: 1px solid var(--fc-color-border);
+  border-radius: 16px;
+  min-width: 0;
+  padding: 20px;
+}
+
+.fc-settings-policy-card {
+  background: var(--fc-color-page);
+  min-height: 150px;
+}
+
+.fc-settings-card > .fc-label,
+.fc-settings-policy-card > .fc-label,
+.fc-settings-empty-card > .fc-label {
+  margin: 0 0 10px;
+}
+
+.fc-settings-card h3,
+.fc-settings-policy-card h3,
+.fc-settings-empty-card h3 {
+  font: 600 24px/1.2 var(--fc-font-sans);
+  margin: 0;
+}
+
+.fc-settings-card > p:not(.fc-label),
+.fc-settings-policy-card > p:not(.fc-label),
+.fc-settings-empty-card > p:not(.fc-label) {
+  color: var(--fc-color-text-secondary);
+  font: 400 14px/1.5 var(--fc-font-sans);
+  margin: 12px 0 0;
+}
+
+.fc-settings-text-link,
+.fc-settings-security-summary a {
+  color: var(--fc-color-text);
+  display: inline-flex;
+  font: 600 14px/1.4 var(--fc-font-sans);
+  margin-top: 18px;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.fc-settings-policy-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.fc-settings-security-summary {
+  display: grid;
+}
+
+.fc-settings-security-summary a {
+  margin-top: 8px;
+}
+
+.fc-settings-security-grid {
+  display: grid;
+  gap: 22px;
+}
+
+.fc-settings-password-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.fc-settings-password-form .fc-field,
+.fc-settings-password-form .fc-field__control {
+  max-width: none;
+  width: 100%;
+}
+
+.fc-settings-password-form .fc-button {
+  justify-self: start;
+  min-height: 44px;
+}
+
+.fc-settings-card-heading {
+  align-items: start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.fc-settings-card-heading h3 {
+  margin-top: 0;
+}
+
+.fc-settings-session-list {
+  display: grid;
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+}
+
+.fc-settings-session-list li {
+  align-items: center;
+  border-top: 1px solid var(--fc-color-border);
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  min-height: 84px;
+  padding: 15px 0;
+}
+
+.fc-settings-session-title {
+  font: 600 14px/1.35 var(--fc-font-sans);
+  margin: 0;
+}
+
+.fc-settings-session-agent,
+.fc-settings-session-meta {
+  color: var(--fc-color-text-secondary);
+  font: 400 12px/1.4 var(--fc-font-sans);
+  margin: 4px 0 0;
+}
+
+.fc-settings-current-session {
+  background: var(--fc-color-page);
+  border-radius: 999px;
+  font: 700 11px/1 var(--fc-font-sans);
+  padding: 9px 11px;
+}
+
+.fc-settings-session-list .fc-button {
+  flex: none;
+  min-height: 44px;
+}
+
+@media (max-width: 1024px) {
+  .fc-settings-layout {
+    gap: 24px;
+    grid-template-columns: 230px minmax(0, 1fr);
+  }
+
+  .fc-settings-profile-form .fc-field {
+    grid-template-columns: 135px minmax(0, 1fr);
+  }
+
+  .fc-settings-form-actions {
+    margin-left: 159px;
+  }
+}
+
+@media (max-width: 768px) {
+  .fc-settings {
+    overflow-x: hidden;
+  }
+
+  .fc-settings-hero {
+    margin-bottom: 22px;
+  }
+
+  .fc-settings-mobile-title {
+    display: block;
+    font: 600 24px/1.2 var(--fc-font-sans);
+    margin: 0;
+  }
+
+  .fc-settings-desktop-kicker,
+  .fc-settings-desktop-title {
+    display: none;
+  }
+
+  .fc-settings-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .fc-settings-nav {
+    background: transparent;
+    border-radius: 0;
+    display: flex;
+    gap: 6px;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 0 0 4px;
+    scrollbar-width: thin;
+    width: 100%;
+  }
+
+  .fc-settings-nav__item {
+    border: 1px solid var(--fc-color-border);
+    flex: none;
+    min-height: 44px;
+    padding: 10px 13px;
+  }
+
+  .fc-settings-nav__item[aria-current='page'] {
+    background: var(--fc-color-inverse);
+    border-color: var(--fc-color-inverse);
+    color: var(--fc-color-text-inverse);
+  }
+
+  .fc-settings-panel {
+    border: 0;
+    border-radius: 0;
+    min-height: 0;
+    padding: 0;
+    width: 100%;
+  }
+
+  .fc-settings-section-header h2 {
+    font-size: 36px;
+    line-height: 1.12;
+  }
+
+  .fc-settings-profile-form .fc-field {
+    display: flex;
+    gap: 8px;
+  }
+
+  .fc-settings-profile-form .fc-field__label {
+    padding-top: 0;
+  }
+
+  .fc-settings-profile-form .fc-field__message,
+  .fc-settings-profile-form .fc-field__control {
+    width: 100%;
+  }
+
+  .fc-settings-form-actions {
+    align-items: stretch;
+    flex-direction: column;
+    margin-left: 0;
+  }
+
+  .fc-settings-form-actions .fc-button,
+  .fc-settings-password-form .fc-button {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .fc-settings-detail-list > div {
+    gap: 5px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fc-settings-card,
+  .fc-settings-policy-card,
+  .fc-settings-empty-card {
+    padding: 16px 14px;
+  }
+
+  .fc-settings-card h3,
+  .fc-settings-policy-card h3,
+  .fc-settings-empty-card h3 {
+    font-size: 24px;
+  }
+
+  .fc-settings-card-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .fc-settings-card-heading .fc-button {
+    width: 100%;
+  }
+
+  .fc-settings-session-list li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .fc-settings-session-list .fc-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  .fc-member-shell__content:has(.fc-settings) {
+    padding-inline: 20px;
+  }
+
+  .fc-settings,
+  .fc-settings-layout,
+  .fc-settings-panel,
+  .fc-settings-profile-form,
+  .fc-settings-card,
+  .fc-settings-policy-card,
+  .fc-settings-empty-card {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .fc-settings-section-header {
+    margin-bottom: 24px;
+  }
+
+  .fc-settings-section-header > .fc-label {
+    display: none;
+  }
+
+  .fc-settings-section-header h2 {
+    font-size: 36px;
+  }
+
+  .fc-settings-section-header > p:last-child {
+    font-size: 13px;
+  }
+
+  .fc-settings-policy-card {
+    min-height: 150px;
+  }
+
+  .fc-settings-policy-card > .fc-label,
+  .fc-settings-card > .fc-label {
+    display: block;
+  }
+
+  .fc-settings-policy-card p:not(.fc-label) {
+    font-size: 13px;
+  }
+
+  .fc-settings-security-summary a,
+  .fc-settings-text-link,
+  .fc-settings-nav__item,
+  .fc-settings-form-actions .fc-button,
+  .fc-settings-password-form .fc-button,
+  .fc-settings-session-list .fc-button {
+    min-height: 44px;
+  }
+
+  .fc-member-menu-popover {
+    right: -2px;
+  }
+}

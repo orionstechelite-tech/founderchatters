@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { OnboardingApiError } from '../onboarding/onboarding-api';
-import { authSessionRequest } from './member-api';
+import { authSessionRequest, signOutMember } from './member-api';
 import { initialsFrom } from './member-format';
 
 export function memberNavItems(userId: string) {
@@ -32,6 +32,7 @@ function resolveActiveItem(
   }
   if (pathname === '/reputation') return 'Profile';
   if (pathname === '/notifications') return '';
+  if (pathname.startsWith('/settings/')) return '';
   if (pathname.startsWith('/founders/')) {
     return pathname === `/founders/${userId}` ? 'Profile' : '';
   }
@@ -48,6 +49,8 @@ export function MemberAppShell({
   const router = useRouter();
   const pathname = usePathname();
   const [session, setSession] = useState<AuthSessionResponse | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,6 +106,19 @@ export function MemberAppShell({
 
   const initials = initialsFrom(session.user.email.split('@')[0] ?? 'FC');
 
+  async function signOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    setMenuOpen(false);
+
+    try {
+      await signOutMember();
+    } finally {
+      router.replace('/signin');
+      router.refresh();
+    }
+  }
+
   return (
     <MemberShell
       actions={
@@ -114,13 +130,31 @@ export function MemberAppShell({
           >
             {initials}
           </a>
-          <button
-            aria-label="Open member menu"
-            className="fc-member-menu"
-            type="button"
-          >
-            •••
-          </button>
+          <div className="fc-member-menu-wrap">
+            <button
+              aria-expanded={menuOpen}
+              aria-haspopup="true"
+              aria-label="Open member menu"
+              className="fc-member-menu"
+              onClick={() => setMenuOpen((current) => !current)}
+              type="button"
+            >
+              •••
+            </button>
+            {menuOpen ? (
+              <nav aria-label="Member menu" className="fc-member-menu-popover">
+                <a href="/settings/profile">Settings</a>
+                <a href="/notifications">Notifications</a>
+                <button
+                  disabled={signingOut}
+                  onClick={() => void signOut()}
+                  type="button"
+                >
+                  {signingOut ? 'Signing out…' : 'Sign out'}
+                </button>
+              </nav>
+            ) : null}
+          </div>
         </>
       }
       activeItem={resolveActiveItem(pathname, session.user.id, activeItem)}

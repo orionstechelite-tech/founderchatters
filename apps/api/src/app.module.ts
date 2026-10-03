@@ -16,6 +16,7 @@ import { RequestIdMiddleware } from './http/request-id.middleware.js';
 import { ConversationsModule } from './conversations/conversations.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { RequestsModule } from './requests/requests.module.js';
+import { SettingsModule } from './settings/settings.module.js';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { RequestsModule } from './requests/requests.module.js';
     RequestsModule,
     ConversationsModule,
     NotificationsModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [
