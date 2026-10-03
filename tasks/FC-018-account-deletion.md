@@ -2,7 +2,9 @@
 
 **Status:** completed after local validation.
 **Branch:** `fc-018-account-deletion`
-**No commit / no push / no PR.**
+**Implementation commit:** `761c7e6 feat: implement account deletion`
+**Pull request:** #17
+**No production deployment or real-user deletion.**
 **Figma remains READ-ONLY.**
 **No Prisma schema change. No migration.**
 
