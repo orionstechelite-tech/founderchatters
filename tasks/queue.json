@@ -274,7 +274,7 @@
       "id": "FC-018",
       "title": "Account deletion",
       "phase": "safety",
-      "status": "pending",
+      "status": "completed",
       "authorization": "HUMAN_APPROVAL_REQUIRED",
       "depends_on": [
         "FC-017"

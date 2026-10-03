@@ -8,6 +8,11 @@ import { NOTIFICATION_TYPES } from '@founderchatters/contracts';
 import type { Prisma } from '../../../../generated/prisma/client.js';
 
 import { PrismaService } from '../database/prisma.service.js';
+import {
+  isDeletedAccount,
+  isTombstoneEmail,
+} from '../identity/deleted-founder.js';
+import { lockUser } from '../requests/request-locks.js';
 import { NotificationEmailService } from './notification-email.service.js';
 
 const DELIVERY_BATCH_SIZE = 25;
@@ -27,9 +32,12 @@ const deliverySelect = {
       type: true,
       title: true,
       body: true,
+      userId: true,
       user: {
         select: {
           email: true,
+          status: true,
+          deletedAt: true,
         },
       },
     },
@@ -120,16 +128,7 @@ export class NotificationDeliveryService {
       const attempt = row.attemptCount + 1;
 
       try {
-        await this.deliver(row);
-
-        await this.prisma.notificationDelivery.update({
-          where: { id: row.id },
-          data: {
-            status: 'SENT',
-            sentAt: new Date(),
-            lastErrorCode: null,
-          },
-        });
+        await this.deliverClaimed(row);
       } catch (error) {
         await this.prisma.notificationDelivery.update({
           where: { id: row.id },
@@ -144,7 +143,7 @@ export class NotificationDeliveryService {
     return processed;
   }
 
-  private async deliver(row: StoredDelivery): Promise<void> {
+  private async deliverClaimed(row: StoredDelivery): Promise<void> {
     const templateKey = this.templateKey(row.notification.type);
 
     const template = await this.prisma.notificationTemplate.findUnique({
@@ -170,14 +169,56 @@ export class NotificationDeliveryService {
       body: row.notification.body ?? '',
     };
 
-    await this.email.send({
-      to: row.notification.user.email,
-      subject: this.render(
-        template.subject ?? row.notification.title,
-        variables,
-      ),
-      body: this.render(template.body, variables),
-    });
+    // Hold User FOR UPDATE across the provider call. Account deletion takes
+    // the same lock before swapping the email, so a send cannot start with
+    // the former address after deletion has committed, and deletion cannot
+    // commit while this send is already inside the protected boundary.
+    await this.prisma.$transaction(
+      async (tx) => {
+        await lockUser(tx, row.notification.userId);
+        const user = await tx.user.findUnique({
+          where: { id: row.notification.userId },
+          select: {
+            email: true,
+            status: true,
+            deletedAt: true,
+          },
+        });
+
+        if (!user || isDeletedAccount(user) || isTombstoneEmail(user.email)) {
+          await tx.notificationDelivery.update({
+            where: { id: row.id },
+            data: {
+              status: 'FAILED',
+              lastErrorCode: 'ACCOUNT_DELETED',
+            },
+          });
+          return;
+        }
+
+        await this.email.send({
+          to: user.email,
+          subject: this.render(
+            template.subject ?? row.notification.title,
+            variables,
+          ),
+          body: this.render(template.body, variables),
+        });
+
+        await tx.notificationDelivery.update({
+          where: { id: row.id },
+          data: {
+            status: 'SENT',
+            sentAt: new Date(),
+            lastErrorCode: null,
+          },
+        });
+      },
+      {
+        maxWait: 10_000,
+        timeout: 20_000,
+      },
+    );
   }
 
   private templateKey(notificationType: string): string {

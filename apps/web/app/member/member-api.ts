@@ -27,6 +27,7 @@ import type {
   UpdateMemberProfileSettingsRequest,
   ChangePasswordRequest,
   ChangePasswordResponse,
+  DeleteAccountRequest,
   CreateReportRequest,
   MemberReportCreatedResponse,
   BlockedFoundersResponse,
@@ -388,6 +389,13 @@ export function changeMemberPassword(
 export function signOutMember(): Promise<void> {
   return onboardingRequest<void>('auth/signout', {
     method: 'POST',
+  });
+}
+
+export function deleteMemberAccount(body: DeleteAccountRequest): Promise<void> {
+  return onboardingRequest<void>('me/account/delete', {
+    method: 'POST',
+    body: JSON.stringify(body),
   });
 }
 

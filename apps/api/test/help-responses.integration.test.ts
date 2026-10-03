@@ -1435,12 +1435,39 @@ describe('help responses HTTP integration', { timeout: 60_000 }, () => {
       data: { status: 'ACTIVE', suspendedUntil: null },
     });
 
+    const authorProbe = await publishedRequest(owner.id);
+    const deletedHelper = await member('probe-deleted');
+    await request(
+      `/v1/requests/${authorProbe}/responses/advice`,
+      deletedHelper.cookie,
+      {
+        method: 'POST',
+        body: JSON.stringify({ body: `${ADVICE} deleted helper.` }),
+      },
+    );
+    await prisma.user.update({
+      where: { id: deletedHelper.id },
+      data: { status: 'DELETED', deletedAt: new Date() },
+    });
+    const afterDeletedHelper = await json<MemberHelpResponsesResponse>(
+      await request(`/v1/requests/${authorProbe}/responses`, owner.cookie),
+    );
+    expect(
+      afterDeletedHelper.responses.some(
+        (row) =>
+          row.author?.displayName === 'Deleted founder' &&
+          row.author.companyName === 'Deleted account' &&
+          row.body?.includes('deleted helper'),
+      ),
+    ).toBe(true);
+    expect(JSON.stringify(afterDeletedHelper)).not.toContain(
+      deletedHelper.email,
+    );
+
     const variants = [
-      { status: 'DELETED' as const, deletedAt: new Date() },
       { emailVerifiedAt: null },
       { onboardingCompletedAt: null },
     ];
-    const authorProbe = await publishedRequest(owner.id);
     for (const extras of variants) {
       const probeHelper = await member(
         `probe-${JSON.stringify(extras).length}`,

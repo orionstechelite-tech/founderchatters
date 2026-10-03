@@ -15,6 +15,10 @@ import type { Prisma } from '../../../../generated/prisma/client.js';
 
 import { PrismaService } from '../database/prisma.service.js';
 import { founderNotFound, parseFounderId } from '../founders/founders-query.js';
+import {
+  deletedFounderSummary,
+  isDeletedAccount,
+} from '../identity/deleted-founder.js';
 import { parseReputationQuery } from './reputation-query.js';
 
 const authorSelect = {
@@ -194,7 +198,8 @@ export class ReputationService {
     const requestVisible =
       (request.status === REQUEST_STATUSES.published ||
         request.status === REQUEST_STATUSES.resolved) &&
-      this.authorIsEligible(request.author);
+      (this.authorIsEligible(request.author) ||
+        isDeletedAccount(request.author));
     return {
       id: row.id,
       type,
@@ -236,6 +241,7 @@ export class ReputationService {
   }
 
   private requireAuthor(author: StoredUser): MemberRequestAuthor {
+    if (isDeletedAccount(author)) return deletedFounderSummary(author.id);
     const projected = this.toAuthor(author);
     if (projected) return projected;
     return {
@@ -250,6 +256,7 @@ export class ReputationService {
   }
 
   private toAuthor(author: StoredUser): MemberRequestAuthor | null {
+    if (isDeletedAccount(author)) return deletedFounderSummary(author.id);
     if (!this.authorIsEligible(author)) return null;
     const profile = author.profile;
     const company = profile?.company;

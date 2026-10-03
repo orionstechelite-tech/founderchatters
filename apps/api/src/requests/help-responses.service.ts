@@ -19,6 +19,10 @@ import type { Prisma } from '../../../../generated/prisma/client.js';
 
 import { PrismaService } from '../database/prisma.service.js';
 import { ApiError } from '../http/api-error.js';
+import {
+  deletedFounderSummary,
+  isDeletedAccount,
+} from '../identity/deleted-founder.js';
 import { areMembersBlocked } from '../safety/block-access.js';
 import { NotificationWriterService } from '../notifications/notification-writer.service.js';
 import {
@@ -523,7 +527,11 @@ export class HelpResponsesService {
     ) {
       throw requestNotFound();
     }
-    if (!isOwner && !this.authorIsEligible(request.author)) {
+    if (
+      !isOwner &&
+      !this.authorIsEligible(request.author) &&
+      !isDeletedAccount(request.author)
+    ) {
       throw requestNotFound();
     }
   }
@@ -787,6 +795,7 @@ export class HelpResponsesService {
   private toAuthor(
     author: StoredResponse['author'],
   ): MemberRequestAuthor | null {
+    if (isDeletedAccount(author)) return deletedFounderSummary(author.id);
     if (!this.authorIsEligible(author)) return null;
     const profile = author.profile;
     const company = profile?.company;

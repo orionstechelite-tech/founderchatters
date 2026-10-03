@@ -1249,8 +1249,35 @@ describe('requests HTTP integration', { timeout: 60_000 }, () => {
     expect(whitespaceRow.headline).toBe('');
     expect(whitespaceRow.context).toBe(CONTEXT);
 
+    const deletedAuthor = await member('elig-deleted', {
+      status: 'DELETED' as const,
+    });
+    const deletedRequest = await prisma.request.create({
+      data: {
+        authorId: deletedAuthor.id,
+        type: 'ASK',
+        status: 'PUBLISHED',
+        headline: HEADLINE,
+        context: CONTEXT,
+        urgency: 'TODAY',
+        publishedAt: stamp,
+      },
+    });
+    const deletedVisible = await json<MemberRequestResponse>(
+      await request(`/v1/requests/${deletedRequest.id}`, viewer.cookie),
+    );
+    expect(deletedVisible.request.author).toMatchObject({
+      id: deletedAuthor.id,
+      displayName: 'Deleted founder',
+      companyName: 'Deleted account',
+      avatarUrl: null,
+    });
+    expect(JSON.stringify(deletedVisible)).not.toContain(deletedAuthor.email);
+    expect(JSON.stringify(deletedVisible)).not.toContain(
+      'Founder elig-deleted',
+    );
+
     const hiddenCases = [
-      { label: 'elig-deleted', status: 'DELETED' as const },
       { label: 'elig-unverified', verified: false },
       { label: 'elig-unapproved', applicationStatus: 'REJECTED' as const },
       { label: 'elig-onboarding', onboarded: false },

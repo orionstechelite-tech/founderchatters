@@ -2,10 +2,13 @@ import { type INestApplicationContext } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
+import { PasswordHasher } from '../src/auth/password-hasher.js';
+import { AppConfig } from '../src/config.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { InMemoryNotificationEmailDelivery } from '../src/notifications/notification-email.service.js';
 import { NotificationDeliveryService } from '../src/notifications/notification-delivery.service.js';
 import { ensureNotificationTemplates } from '../src/notifications/notification-template-seed.js';
+import { AccountDeletionService } from '../src/settings/account-deletion.service.js';
 import { WorkerModule } from '../src/worker.module.js';
 
 process.env.NODE_ENV = 'test';
@@ -24,6 +27,7 @@ describe('notification delivery integration', { timeout: 90_000 }, () => {
   let prisma: PrismaService;
   let deliveries: NotificationDeliveryService;
   let email: InMemoryNotificationEmailDelivery;
+  let deletion: AccountDeletionService;
 
   const userIds: string[] = [];
 
@@ -35,6 +39,10 @@ describe('notification delivery integration', { timeout: 90_000 }, () => {
     prisma = app.get(PrismaService);
     deliveries = app.get(NotificationDeliveryService);
     email = app.get(InMemoryNotificationEmailDelivery);
+    deletion = new AccountDeletionService(
+      prisma,
+      new PasswordHasher(app.get(AppConfig)),
+    );
 
     await ensureNotificationTemplates(prisma, true);
   }, 60_000);
@@ -278,5 +286,135 @@ describe('notification delivery integration', { timeout: 90_000 }, () => {
     expect(stored.lastErrorCode).toBe('TEMPLATE_UNAVAILABLE');
 
     expect(email.getMessages()).toEqual([]);
+  });
+
+  it('does not email a deleted account and marks the delivery ACCOUNT_DELETED', async () => {
+    const user = await createUser('deleted');
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        status: 'DELETED',
+        deletedAt: new Date(),
+        email: `deleted-${user.id}@deleted.invalid`,
+      },
+    });
+
+    const notification = await prisma.notification.create({
+      data: {
+        userId: user.id,
+        type: 'APPLICATION_APPROVED',
+        title: 'Should not send',
+        body: 'Deleted accounts do not receive mail.',
+        deliveries: {
+          create: {
+            channel: 'EMAIL',
+            templateVersion: 'v1',
+          },
+        },
+      },
+      include: { deliveries: true },
+    });
+
+    expect(await deliveries.processBatch()).toBe(1);
+    const stored = await prisma.notificationDelivery.findUniqueOrThrow({
+      where: { id: notification.deliveries[0]!.id },
+    });
+    expect(stored.status).toBe('FAILED');
+    expect(stored.lastErrorCode).toBe('ACCOUNT_DELETED');
+    expect(email.getMessages()).toEqual([]);
+  });
+
+  it('does not start a provider send after account deletion has committed', async () => {
+    const user = await createUser('delete-wins');
+    const notification = await prisma.notification.create({
+      data: {
+        userId: user.id,
+        type: 'APPLICATION_APPROVED',
+        title: 'Should not send after delete',
+        body: 'Deletion committed first.',
+        deliveries: {
+          create: {
+            channel: 'EMAIL',
+            templateVersion: 'v1',
+          },
+        },
+      },
+      include: { deliveries: true },
+    });
+
+    await deletion.deleteAccount(user.id, { confirmation: 'DELETE' });
+    const afterDelete = await prisma.user.findUniqueOrThrow({
+      where: { id: user.id },
+    });
+    expect(afterDelete.status).toBe('DELETED');
+    expect(afterDelete.email).not.toBe(user.email);
+
+    expect(await deliveries.processBatch()).toBe(0);
+    const stored = await prisma.notificationDelivery.findUniqueOrThrow({
+      where: { id: notification.deliveries[0]!.id },
+    });
+    expect(stored.status).toBe('FAILED');
+    expect(stored.lastErrorCode).toBe('ACCOUNT_DELETED');
+    expect(email.getMessages()).toEqual([]);
+  });
+
+  it('serializes deletion behind an in-flight provider send on the same user', async () => {
+    const user = await createUser('send-owns-lock');
+    const notification = await prisma.notification.create({
+      data: {
+        userId: user.id,
+        type: 'APPLICATION_APPROVED',
+        title: 'Send started first',
+        body: 'Provider owns the send boundary.',
+        deliveries: {
+          create: {
+            channel: 'EMAIL',
+            templateVersion: 'v1',
+          },
+        },
+      },
+      include: { deliveries: true },
+    });
+
+    const gate = email.deferSend();
+    const batch = deliveries.processBatch();
+    const inFlight = await gate.started;
+    expect(inFlight.to).toBe(user.email);
+
+    const deleting = deletion.deleteAccount(user.id, {
+      confirmation: 'DELETE',
+    });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 3_000);
+    });
+    const mid = await prisma.user.findUniqueOrThrow({
+      where: { id: user.id },
+    });
+    expect(mid.status).toBe('ACTIVE');
+    expect(mid.email).toBe(user.email);
+    expect(email.getMessages()).toEqual([]);
+
+    gate.release();
+    await expect(batch).resolves.toBe(1);
+    await deleting;
+
+    const stored = await prisma.notificationDelivery.findUniqueOrThrow({
+      where: { id: notification.deliveries[0]!.id },
+    });
+    expect(stored.status).toBe('SENT');
+    expect(email.getMessages()).toEqual([
+      {
+        to: user.email,
+        subject: 'FounderChatters application update',
+        body: 'Send started first\n\nProvider owns the send boundary.',
+      },
+    ]);
+
+    const after = await prisma.user.findUniqueOrThrow({
+      where: { id: user.id },
+    });
+    expect(after.status).toBe('DELETED');
+    expect(after.email).not.toBe(user.email);
+    expect(after.deletedAt).not.toBeNull();
   });
 });

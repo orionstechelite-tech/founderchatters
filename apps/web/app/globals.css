@@ -3999,6 +3999,28 @@ a.fc-button {
   font-size: 13px;
 }
 
+.fc-settings-danger,
+.fc-settings-warning {
+  background: var(--fc-color-page, #f7f4ec);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 12px;
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 16px;
+}
+
+.fc-settings-danger h3,
+.fc-settings-warning p,
+.fc-settings-danger p {
+  margin: 0;
+}
+
+.fc-settings-danger .fc-button,
+.fc-safety-sheet .fc-button {
+  min-height: 44px;
+}
+
 @media (max-width: 390px) {
   .fc-safety-overlay,
   .fc-suspended {

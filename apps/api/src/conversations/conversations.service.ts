@@ -25,6 +25,10 @@ import { Prisma as PrismaNamespace } from '../../../../generated/prisma/client.j
 
 import { PrismaService } from '../database/prisma.service.js';
 import { ApiError } from '../http/api-error.js';
+import {
+  deletedFounderSummary,
+  isDeletedAccount,
+} from '../identity/deleted-founder.js';
 import { areMembersBlocked } from '../safety/block-access.js';
 import { NotificationWriterService } from '../notifications/notification-writer.service.js';
 import {
@@ -513,13 +517,15 @@ export class ConversationsService {
     latest: StoredMessage | null,
     blocked: boolean,
   ): MemberConversation {
-    const counterpart = this.toCounterpart(this.counterpartUser(row, callerId));
+    const counterpartUser = this.counterpartUser(row, callerId);
+    const counterpart = this.toCounterpart(counterpartUser);
     return {
       ...this.toSummary(row, callerId, latest),
       canSend:
         row.status === CONVERSATION_STATUSES.active &&
         counterpart !== null &&
-        !blocked,
+        !blocked &&
+        !isDeletedAccount(counterpartUser),
     };
   }
 
@@ -565,6 +571,7 @@ export class ConversationsService {
   }
 
   private toCounterpart(user: StoredUser): MemberMessagingCounterpart | null {
+    if (isDeletedAccount(user)) return deletedFounderSummary(user.id);
     if (!this.isEligibleMember(user)) return null;
     const profile = user.profile;
     const company = profile?.company;
@@ -588,7 +595,10 @@ export class ConversationsService {
     ) {
       return { available: false };
     }
-    if (!this.isEligibleMember(request.author)) {
+    if (
+      !this.isEligibleMember(request.author) &&
+      !isDeletedAccount(request.author)
+    ) {
       return { available: false };
     }
     return {
