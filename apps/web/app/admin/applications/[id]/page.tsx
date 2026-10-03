@@ -1,6 +1,7 @@
-import { AdminShell } from '@founderchatters/ui';
+import { ADMIN_PERMISSIONS } from '@founderchatters/contracts';
 import type { Metadata } from 'next';
 
+import { AdminAppShell } from '../../admin-app-shell';
 import { ApplicationDetailClient } from './application-detail-client';
 
 export const metadata: Metadata = {
@@ -14,8 +15,11 @@ export default async function AdminApplicationDetailPage({
 }) {
   const { id } = await params;
   return (
-    <AdminShell activeItem="Applications">
+    <AdminAppShell
+      activeItem="Applications"
+      required={ADMIN_PERMISSIONS.applicationsRead}
+    >
       <ApplicationDetailClient id={id} />
-    </AdminShell>
+    </AdminAppShell>
   );
 }

@@ -38,3 +38,21 @@ Never share DBs, session secrets, provider credentials, or buckets across enviro
 - health checks
 - smoke tests
 - human approval
+
+## Admin RBAC catalog
+
+After deploying an FC-019+ API that adds predefined admin permissions,
+operators must explicitly synchronize the catalog (Permission, AdminRole,
+RolePermission only):
+
+```sh
+npm run admin:rbac:sync
+```
+
+In production, confirm with `--confirm` or
+`ADMIN_RBAC_SYNC_CONFIRM=SYNC_ADMIN_RBAC_CATALOG`.
+
+This command does not run at startup, does not assign UserAdminRole, and
+does not create a first admin. First-admin assignment remains a separate
+controlled operational procedure. Later assignments use
+`PUT /v1/admin/admins/:id/roles`.

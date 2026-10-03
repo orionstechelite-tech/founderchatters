@@ -116,52 +116,124 @@ export function MarketingShell({ children }: ShellProps) {
   );
 }
 
-const adminItems = [
-  'Command center',
-  'Applications',
-  'Members',
-  'Moderation',
-  'Taxonomy',
-  'Operations',
+export const ADMIN_NAV_GROUPS = [
+  {
+    label: 'OPERATIONS',
+    items: [
+      { href: '/admin', label: 'Overview' },
+      { href: '/admin/applications', label: 'Applications' },
+      { href: '/admin/members', label: 'Members' },
+      { href: '/admin/requests', label: 'Requests' },
+      { href: '/admin/support', label: 'Support & Appeals' },
+    ],
+  },
+  {
+    label: 'TRUST & QUALITY',
+    items: [
+      { href: '/admin/reports', label: 'Reports' },
+      { href: '/admin/reputation', label: 'Reputation' },
+      { href: '/admin/notifications', label: 'Notifications' },
+    ],
+  },
+  {
+    label: 'INSIGHTS',
+    items: [
+      { href: '/admin/taxonomy', label: 'Taxonomy' },
+      { href: '/admin/analytics', label: 'Analytics' },
+    ],
+  },
+  {
+    label: 'PLATFORM',
+    items: [
+      { href: '/admin/admins', label: 'Admins & Roles' },
+      { href: '/admin/audit', label: 'Audit Log' },
+      { href: '/admin/settings', label: 'Platform Settings' },
+      { href: '/admin/system', label: 'System Health' },
+    ],
+  },
 ] as const;
 
+export type AdminNavLabel =
+  (typeof ADMIN_NAV_GROUPS)[number]['items'][number]['label'];
+
+export type AdminNavGroup = {
+  label: string;
+  items: ReadonlyArray<{ href: string; label: string }>;
+};
+
 export function AdminShell({
-  activeItem = 'Command center',
+  activeItem = 'Overview',
   children,
-}: ShellProps & { activeItem?: (typeof adminItems)[number] }) {
+  groups = ADMIN_NAV_GROUPS,
+  signedInAs,
+}: ShellProps & {
+  activeItem?: string;
+  groups?: readonly AdminNavGroup[];
+  signedInAs?: string;
+}) {
   return (
     <div className="fc-admin-shell">
       <aside className="fc-admin-sidebar">
         <div className="fc-wordmark fc-wordmark--inverse">FounderChatters</div>
         <div className="fc-admin-sidebar__eyebrow">Admin operations</div>
         <nav aria-label="Admin navigation">
-          {adminItems.map((item) => (
-            <a
-              aria-current={item === activeItem ? 'page' : undefined}
-              href={
-                item === 'Applications'
-                  ? '/admin/applications'
-                  : item === 'Moderation'
-                    ? '/admin/reports'
-                    : `#${item.toLowerCase().replace(' ', '-')}`
-              }
-              key={item}
-            >
-              {item}
-            </a>
+          {groups.map((group) => (
+            <div className="fc-admin-nav-group" key={group.label}>
+              <p className="fc-admin-nav-group__label">{group.label}</p>
+              {group.items.map((item) => (
+                <a
+                  aria-current={item.label === activeItem ? 'page' : undefined}
+                  href={item.href}
+                  key={item.href}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
           ))}
         </nav>
+        <form action="/admin/search" className="fc-admin-search" method="get">
+          <label
+            className="fc-admin-search__label"
+            htmlFor="admin-global-search"
+          >
+            Search
+          </label>
+          <input
+            id="admin-global-search"
+            minLength={2}
+            name="q"
+            placeholder="Search founder, email, company, request or report ID"
+            type="search"
+          />
+        </form>
+        {signedInAs ? (
+          <p className="fc-admin-signed-in">Signed in as {signedInAs}</p>
+        ) : null}
       </aside>
       <main className="fc-admin-content">{children}</main>
       <section
         aria-labelledby="admin-small-screen-title"
         className="fc-admin-unsupported"
       >
-        <div className="fc-admin-unsupported__mark">FC</div>
-        <h1 id="admin-small-screen-title">Admin is built for larger screens</h1>
-        <p>
-          Open FounderChatters Admin on a desktop or tablet with a wider
-          display.
+        <p className="fc-admin-unsupported__kicker">FounderChatters Admin</p>
+        <div className="fc-admin-unsupported__card">
+          <h1 id="admin-small-screen-title">Larger screen required</h1>
+          <p>FounderChatters Admin is optimized for desktop operations.</p>
+          <p>
+            Use a screen around 900px wide or larger to access queues, tables,
+            case details, and operational controls safely.
+          </p>
+          <a
+            className="fc-button fc-button--medium fc-button--secondary"
+            href="/home"
+          >
+            Return to member app
+          </a>
+        </div>
+        <p className="fc-admin-unsupported__policy">
+          MVP policy · Admin mobile UI is intentionally not designed. 1440
+          canonical + 1024 supported.
         </p>
       </section>
     </div>

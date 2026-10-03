@@ -43,6 +43,24 @@ export async function lockConversation(
   `;
 }
 
+export async function lockNotificationDelivery(
+  tx: Prisma.TransactionClient,
+  deliveryId: string,
+): Promise<void> {
+  await tx.$queryRaw`
+    SELECT id FROM "NotificationDelivery" WHERE id = ${deliveryId} FOR UPDATE
+  `;
+}
+
+export async function lockJobFailure(
+  tx: Prisma.TransactionClient,
+  jobFailureId: string,
+): Promise<void> {
+  await tx.$queryRaw`
+    SELECT id FROM "JobFailure" WHERE id = ${jobFailureId} FOR UPDATE
+  `;
+}
+
 export function isUniqueConstraintError(error: unknown): boolean {
   if (typeof error !== 'object' || error === null) return false;
   if (

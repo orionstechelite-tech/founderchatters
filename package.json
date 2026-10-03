@@ -30,6 +30,7 @@
     "services:down": "docker compose -f docker-compose.dev.yml down",
     "services:logs": "docker compose -f docker-compose.dev.yml logs --tail=100 postgres redis",
     "services:status": "docker compose -f docker-compose.dev.yml ps",
+    "admin:rbac:sync": "npx tsx scripts/sync-admin-rbac-catalog.ts",
     "services:up": "docker compose -f docker-compose.dev.yml up -d --wait",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",

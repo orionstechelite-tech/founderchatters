@@ -122,14 +122,18 @@ Admin:
 
 ## Admin platform
 - `GET /admin`
+- `GET /admin/session`
 - `GET /admin/members`
 - `GET /admin/members/:id`
+- `POST /admin/members/:id/suspend`
+- `POST /admin/members/:id/restore`
 - `GET /admin/requests`
 - `GET /admin/requests/:id`
 - `GET /admin/reputation`
 - `GET /admin/reputation/:id`
 - `GET /admin/notifications`
 - `GET /admin/notifications/:id`
+- `POST /admin/notifications/:id/retry`
 - `GET /admin/notifications/templates`
 - `GET /admin/notifications/templates/:id`
 - `GET /admin/taxonomy`
@@ -139,6 +143,9 @@ Admin:
 - `GET /admin/analytics`
 - `GET /admin/admins`
 - `GET /admin/admins/:id`
+- `PUT /admin/admins/:id/roles`
+- `POST /admin/admins/:id/disable`
+- `DELETE /admin/admins/:id/sessions`
 - `GET /admin/roles`
 - `GET /admin/audit`
 - `GET /admin/audit/:id`
@@ -148,6 +155,9 @@ Admin:
 - `GET /admin/system/jobs/:id`
 - `POST /admin/system/jobs/:id/retry`
 - `GET /admin/search?q=...`
+
+Settings and notification templates are read-only. There is no
+`POST/PUT/PATCH /admin/settings` and no template editor.
 
 ## Standard error body
 

@@ -4034,3 +4034,149 @@ a.fc-button {
     min-height: 44px;
   }
 }
+
+.fc-admin-page {
+  display: grid;
+  gap: var(--fc-space-6);
+}
+
+.fc-admin-page__header h1,
+.fc-admin-page h1 {
+  font: 600 36px/1.12 var(--fc-font-sans);
+  margin: 0 0 var(--fc-space-2);
+}
+
+.fc-admin-page__header p,
+.fc-admin-page > p {
+  color: var(--fc-color-text-secondary);
+  margin: 0;
+}
+
+.fc-admin-status {
+  color: var(--fc-color-text-secondary);
+  margin: 0;
+}
+
+.fc-admin-metrics {
+  display: grid;
+  gap: var(--fc-space-4);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.fc-admin-metric {
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 18px;
+  display: grid;
+  gap: 8px;
+  min-height: 110px;
+  padding: 16px;
+  text-decoration: none;
+}
+
+.fc-admin-metric__kicker {
+  color: var(--fc-color-text-secondary);
+  font: 700 12px var(--fc-font-sans);
+  letter-spacing: 0.72px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.fc-admin-metric__value {
+  font: 600 24px/1.2 var(--fc-font-sans);
+  margin: 0;
+}
+
+.fc-admin-table-wrap {
+  overflow-x: auto;
+}
+
+.fc-admin-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.fc-admin-table th,
+.fc-admin-table td {
+  border-bottom: 1px solid var(--fc-color-border);
+  padding: 12px 10px;
+  text-align: left;
+}
+
+.fc-admin-pager,
+.fc-admin-filters,
+.fc-admin-actions,
+.fc-admin-inline,
+.fc-admin-form {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fc-admin-filters label,
+.fc-admin-form {
+  display: grid;
+  gap: 6px;
+}
+
+.fc-admin-dl {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.fc-admin-dl div {
+  display: grid;
+  gap: 4px;
+}
+
+.fc-admin-dl dt {
+  color: var(--fc-color-text-secondary);
+  font: 700 12px var(--fc-font-sans);
+  letter-spacing: 0.72px;
+  text-transform: uppercase;
+}
+
+.fc-admin-dl dd {
+  margin: 0;
+}
+
+.fc-admin-body,
+.fc-admin-thread p {
+  white-space: pre-wrap;
+}
+
+.fc-admin-thread,
+.fc-admin-list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fc-admin-card {
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 16px;
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.fc-admin-card h2 {
+  font: 600 20px/1.2 var(--fc-font-sans);
+  margin: 0;
+}
+
+.fc-admin-card pre {
+  margin: 0;
+  overflow-x: auto;
+}
+
+@media (max-width: 1024px) {
+  .fc-admin-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

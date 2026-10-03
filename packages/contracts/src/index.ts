@@ -161,6 +161,28 @@ export const ADMIN_PERMISSIONS = {
   reportsRead: 'admin.reports.read',
   reportsModerate: 'admin.reports.moderate',
   membersSuspend: 'admin.members.suspend',
+  overviewRead: 'admin.overview.read',
+  membersRead: 'admin.members.read',
+  membersRestore: 'admin.members.restore',
+  requestsRead: 'admin.requests.read',
+  supportRead: 'admin.support.read',
+  supportReply: 'admin.support.reply',
+  supportStatus: 'admin.support.status',
+  reputationRead: 'admin.reputation.read',
+  notificationsRead: 'admin.notifications.read',
+  notificationsRetry: 'admin.notifications.retry',
+  taxonomyRead: 'admin.taxonomy.read',
+  taxonomyManage: 'admin.taxonomy.manage',
+  analyticsRead: 'admin.analytics.read',
+  adminsRead: 'admin.admins.read',
+  adminsManage: 'admin.admins.manage',
+  rolesRead: 'admin.roles.read',
+  auditRead: 'admin.audit.read',
+  settingsRead: 'admin.settings.read',
+  systemRead: 'admin.system.read',
+  jobsRead: 'admin.jobs.read',
+  jobsRetry: 'admin.jobs.retry',
+  searchRead: 'admin.search.read',
 } as const;
 
 export type AdminPermission =
@@ -1262,4 +1284,220 @@ export type MemberReputationResponse = {
   pageSize: number;
   total: number;
   totalPages: number;
+};
+
+export const ADMIN_OPS_AUDIT_ACTIONS = {
+  memberSuspended: 'MEMBER_SUSPENDED',
+  memberRestored: 'MEMBER_RESTORED',
+  adminRolesChanged: 'ADMIN_ROLES_CHANGED',
+  adminDisabled: 'ADMIN_DISABLED',
+  adminSessionsRevoked: 'ADMIN_SESSIONS_REVOKED',
+  taxonomyCreated: 'TAXONOMY_CREATED',
+  taxonomyUpdated: 'TAXONOMY_UPDATED',
+  taxonomyMerged: 'TAXONOMY_MERGED',
+  notificationRetried: 'NOTIFICATION_DELIVERY_RETRIED',
+  jobRetried: 'JOB_FAILURE_RETRIED',
+  supportReplied: 'SUPPORT_REPLIED',
+  supportStatusChanged: 'SUPPORT_STATUS_CHANGED',
+} as const;
+
+export const SUPPORT_CASE_STATUSES = [
+  'OPEN',
+  'IN_PROGRESS',
+  'WAITING_ON_USER',
+  'RESOLVED',
+  'CLOSED',
+] as const;
+
+export type SupportCaseStatus = (typeof SUPPORT_CASE_STATUSES)[number];
+
+export type AdminSessionResponse = {
+  user: { id: string; email: string };
+  roles: AdminRoleKey[];
+  permissions: AdminPermission[];
+};
+
+export type AdminOverviewResponse = {
+  metrics: {
+    submittedApplications: number;
+    openReports: number;
+    publishedRequests: number;
+    openSupportCases: number;
+    queuedNotificationDeliveries: number;
+    unresolvedJobFailures: number;
+  };
+};
+
+export type AdminPage<T> = {
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export type AdminMemberListItem = {
+  id: string;
+  displayName: string;
+  email: string | null;
+  companyName: string | null;
+  status: string;
+  emailVerified: boolean;
+  applicationStatus: string | null;
+  onboardingCompleted: boolean;
+  createdAt: string;
+  deleted: boolean;
+};
+
+export type AdminMemberDetail = AdminMemberListItem & {
+  city: string | null;
+  country: string | null;
+  suspendedUntil: string | null;
+  suspensionReason: string | null;
+  requestCount: number;
+  responseCount: number;
+  reportCount: number;
+  contributionCount: number;
+};
+
+export type AdminRequestListItem = {
+  id: string;
+  headline: string;
+  status: string;
+  type: string;
+  authorId: string;
+  authorDisplayName: string;
+  responseCount: number;
+  publishedAt: string | null;
+  resolvedAt: string | null;
+};
+
+export type AdminSupportCaseListItem = {
+  id: string;
+  subject: string;
+  category: string;
+  status: SupportCaseStatus;
+  email: string | null;
+  userId: string | null;
+  createdAt: string;
+};
+
+export type AdminSupportMessage = {
+  id: string;
+  actorType: string;
+  createdAt: string;
+  body: string;
+};
+
+export type AdminContributionListItem = {
+  id: string;
+  helperId: string;
+  helperDisplayName: string;
+  confirmerId: string;
+  requestId: string;
+  createdAt: string;
+  hasThankYou: boolean;
+};
+
+export type AdminNotificationDeliveryItem = {
+  id: string;
+  notificationId: string;
+  type: string;
+  title: string;
+  recipientUserId: string;
+  recipientEmail: string | null;
+  channel: string;
+  status: string;
+  attemptCount: number;
+  lastErrorCode: string | null;
+  createdAt: string;
+  sentAt: string | null;
+  templateVersion: string;
+};
+
+export type AdminNotificationTemplate = {
+  id: string;
+  key: string;
+  version: string;
+  subject: string | null;
+  isActive: boolean;
+};
+
+export type AdminTaxonomyTopic = {
+  id: string;
+  slug: string;
+  label: string;
+  description: string | null;
+  isActive: boolean;
+  mergedIntoId: string | null;
+};
+
+export type AdminAnalyticsResponse = {
+  publishedRequests: number;
+  requestsWithResponse: number;
+  confirmedHelped: number;
+  activeHelpers: number;
+  requestsWithNoResponse: number;
+  submittedApplications: number;
+};
+
+export type AdminUserListItem = {
+  id: string;
+  email: string;
+  displayName: string;
+  status: string;
+  roles: AdminRoleKey[];
+};
+
+export type AdminRoleListItem = {
+  key: AdminRoleKey;
+  name: string;
+  permissions: AdminPermission[];
+};
+
+export type AdminAuditListItem = {
+  id: string;
+  actorUserId: string | null;
+  action: string;
+  targetType: string | null;
+  targetId: string | null;
+  reason: string | null;
+  createdAt: string;
+};
+
+export type AdminSettingsResponse = {
+  settings: Array<{
+    key: string;
+    source: 'code' | 'database';
+    value: unknown;
+  }>;
+};
+
+export type AdminSystemResponse = {
+  api: 'ok';
+  database: 'ok' | 'unavailable';
+  notificationBacklog: number;
+  unresolvedJobFailures: number;
+};
+
+export type AdminJobFailureItem = {
+  id: string;
+  queue: string;
+  jobName: string;
+  jobId: string | null;
+  errorCode: string | null;
+  attempts: number;
+  resolvedAt: string | null;
+  createdAt: string;
+};
+
+export type AdminSearchHit = {
+  type: 'member' | 'request' | 'report' | 'support';
+  id: string;
+  label: string;
+};
+
+export type AdminSearchResponse = {
+  q: string;
+  results: AdminSearchHit[];
 };
