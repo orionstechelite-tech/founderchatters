@@ -1,7 +1,10 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import {
   ADMIN_ERROR_CODES,
+  ADMIN_ROLES,
   type AdminPermission,
+  type AdminRoleKey,
+  type AdminSessionResponse,
 } from '@founderchatters/contracts';
 import type { Request } from 'express';
 
@@ -41,6 +44,38 @@ export class AdminAuthService {
       );
     }
     return { ...principal, permissions };
+  }
+
+  async authenticateAny(request: Request): Promise<AdminPrincipal> {
+    const principal = await this.sessions.authenticate(
+      this.readSessionCookie(request),
+    );
+    const permissions = await this.loadPermissions(principal.user.id);
+    if (permissions.size === 0) {
+      throw new ApiError(
+        ADMIN_ERROR_CODES.permissionDenied,
+        'You do not have permission to perform this admin action.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    return { ...principal, permissions };
+  }
+
+  async session(request: Request): Promise<AdminSessionResponse> {
+    const principal = await this.authenticateAny(request);
+    const assignments = await this.prisma.userAdminRole.findMany({
+      where: { userId: principal.user.id },
+      select: { role: { select: { key: true } } },
+    });
+    return {
+      user: { id: principal.user.id, email: principal.user.email },
+      roles: assignments
+        .map((row) => row.role.key)
+        .filter((key): key is AdminRoleKey =>
+          Object.values(ADMIN_ROLES).includes(key as AdminRoleKey),
+        ),
+      permissions: [...principal.permissions] as AdminPermission[],
+    };
   }
 
   capabilities(permissions: Set<string>): {

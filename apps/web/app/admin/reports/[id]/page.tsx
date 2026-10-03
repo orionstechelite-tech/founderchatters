@@ -1,6 +1,7 @@
-import { AdminShell } from '@founderchatters/ui';
+import { ADMIN_PERMISSIONS } from '@founderchatters/contracts';
 import type { Metadata } from 'next';
 
+import { AdminAppShell } from '../../admin-app-shell';
 import { ReportDetailClient } from './report-detail-client';
 
 export const metadata: Metadata = {
@@ -14,8 +15,11 @@ export default async function AdminReportDetailPage({
 }) {
   const { id } = await params;
   return (
-    <AdminShell activeItem="Moderation">
+    <AdminAppShell
+      activeItem="Reports"
+      required={ADMIN_PERMISSIONS.reportsRead}
+    >
       <ReportDetailClient reportId={id} />
-    </AdminShell>
+    </AdminAppShell>
   );
 }

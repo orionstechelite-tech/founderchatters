@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 
+import { AdminOpsModule } from './admin/admin-ops.module.js';
 import { AdminApplicationModule } from './admin/application-review.module.js';
 import { AppController } from './app.controller.js';
 import { ApplicationModule } from './application/application.module.js';
@@ -24,6 +25,7 @@ import { SettingsModule } from './settings/settings.module.js';
     AuthModule,
     ApplicationModule,
     AdminApplicationModule,
+    AdminOpsModule,
     OnboardingModule,
     FoundersModule,
     RequestsModule,

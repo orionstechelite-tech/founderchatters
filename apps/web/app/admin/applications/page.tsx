@@ -1,6 +1,7 @@
-import { AdminShell } from '@founderchatters/ui';
+import { ADMIN_PERMISSIONS } from '@founderchatters/contracts';
 import type { Metadata } from 'next';
 
+import { AdminAppShell } from '../admin-app-shell';
 import { ApplicationsQueueClient } from './applications-queue-client';
 
 export const metadata: Metadata = {
@@ -9,8 +10,11 @@ export const metadata: Metadata = {
 
 export default function AdminApplicationsPage() {
   return (
-    <AdminShell activeItem="Applications">
+    <AdminAppShell
+      activeItem="Applications"
+      required={ADMIN_PERMISSIONS.applicationsRead}
+    >
       <ApplicationsQueueClient />
-    </AdminShell>
+    </AdminAppShell>
   );
 }
