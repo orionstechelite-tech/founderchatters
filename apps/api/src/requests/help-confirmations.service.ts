@@ -2,6 +2,8 @@ import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import {
   HELP_OUTCOMES,
   INTRODUCTION_STATUSES,
+  NOTIFICATION_TYPES,
+  REPUTATION_HISTORY_LABELS,
   REQUEST_ERROR_CODES,
   REQUEST_STATUSES,
   RESPONSE_TYPES,
@@ -16,6 +18,7 @@ import type { Prisma } from '../../../../generated/prisma/client.js';
 
 import { PrismaService } from '../database/prisma.service.js';
 import { ApiError } from '../http/api-error.js';
+import { NotificationWriterService } from '../notifications/notification-writer.service.js';
 import {
   contributionCreatedEvent,
   emitHelpConfirmationEvent,
@@ -107,6 +110,8 @@ export class HelpConfirmationsService {
   constructor(
     @Inject(PrismaService)
     private readonly prisma: PrismaService,
+    @Inject(NotificationWriterService)
+    private readonly notifications: NotificationWriterService,
   ) {}
 
   async confirm(
@@ -436,6 +441,16 @@ export class HelpConfirmationsService {
           include: confirmationInclude,
         });
         if (!reloaded?.contribution) throw confirmationInvalidState();
+
+        if (repaired.created) {
+          await this.notifyContributionRecorded(
+            tx,
+            request,
+            response,
+            existing.helperId,
+          );
+        }
+
         return {
           row: reloaded,
           events: repaired.created
@@ -511,6 +526,13 @@ export class HelpConfirmationsService {
       }),
     ];
     if (contribution.created) {
+      await this.notifyContributionRecorded(
+        tx,
+        request,
+        response,
+        updated.helperId,
+      );
+
       events.push(
         contributionCreatedEvent({
           contributionId: contribution.row.id,
@@ -565,6 +587,8 @@ export class HelpConfirmationsService {
       topicIds,
     );
     if (contribution.created) {
+      await this.notifyContributionRecorded(tx, request, response, helperId);
+
       events.push(
         contributionCreatedEvent({
           contributionId: contribution.row.id,
@@ -590,6 +614,26 @@ export class HelpConfirmationsService {
     return { row: reloaded, events };
   }
 
+  private async notifyContributionRecorded(
+    tx: Prisma.TransactionClient,
+    request: StoredRequest,
+    response: StoredResponse,
+    contributorId: string,
+  ): Promise<void> {
+    const confirmerName =
+      request.author.profile?.displayName?.trim() || 'A founder';
+
+    await this.notifications.create(
+      {
+        userId: contributorId,
+        type: NOTIFICATION_TYPES.contributionRecorded,
+        title: 'Contribution recorded',
+        body: `${confirmerName} confirmed your help. ${REPUTATION_HISTORY_LABELS[response.type]}.`,
+        href: '/reputation',
+      },
+      tx,
+    );
+  }
   private async createContribution(
     tx: Prisma.TransactionClient,
     helpConfirmationId: string,

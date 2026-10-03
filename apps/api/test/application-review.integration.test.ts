@@ -569,7 +569,10 @@ describe('admin application review HTTP integration', () => {
 
   it('moves SUBMITTED to NEEDS_INFO without decidedAt and keeps history', async () => {
     const admin = await reviewer('APPLICATION_REVIEWER', 'needs-info');
-    const { application } = await submittedApplication('India', 'Needs Co');
+    const { application, founder } = await submittedApplication(
+      'India',
+      'Needs Co',
+    );
     const submittedAt = application.submittedAt;
     const empty = await request(
       `/v1/admin/applications/${application.id}/needs-info`,
@@ -613,6 +616,34 @@ describe('admin application review HTTP integration', () => {
         },
       }),
     ).toBe(1);
+
+    const needsInfoNotifications = await prisma.notification.findMany({
+      where: {
+        userId: founder.id,
+        type: 'APPLICATION_NEEDS_INFO',
+      },
+      include: {
+        deliveries: true,
+      },
+    });
+    expect(needsInfoNotifications).toHaveLength(1);
+    expect(needsInfoNotifications[0]).toMatchObject({
+      type: 'APPLICATION_NEEDS_INFO',
+      title: 'More information needed',
+      body: 'Your application needs more information before review can continue.',
+      href: '/application',
+      deliveries: [
+        {
+          channel: 'EMAIL',
+          templateVersion: 'v1',
+          status: 'QUEUED',
+          attemptCount: 0,
+        },
+      ],
+    });
+    expect(JSON.stringify(needsInfoNotifications)).not.toContain(
+      'Clarify the customer and stage.',
+    );
   });
 
   it('approves and rejects with decidedAt and terminal rules', async () => {
@@ -637,6 +668,31 @@ describe('admin application review HTTP integration', () => {
     );
     expect(again.status).toBe(409);
 
+    const approvedNotifications = await prisma.notification.findMany({
+      where: {
+        userId: approvedCase.founder.id,
+        type: 'APPLICATION_APPROVED',
+      },
+      include: {
+        deliveries: true,
+      },
+    });
+    expect(approvedNotifications).toHaveLength(1);
+    expect(approvedNotifications[0]).toMatchObject({
+      type: 'APPLICATION_APPROVED',
+      title: 'Application approved',
+      body: 'Your FounderChatters application has been approved.',
+      href: '/application',
+      deliveries: [
+        {
+          channel: 'EMAIL',
+          templateVersion: 'v1',
+          status: 'QUEUED',
+          attemptCount: 0,
+        },
+      ],
+    });
+
     const rejectedCase = await submittedApplication('India', 'Reject Co');
     const reject = await request(
       `/v1/admin/applications/${rejectedCase.application.id}/reject`,
@@ -658,6 +714,34 @@ describe('admin application review HTTP integration', () => {
         },
       }),
     ).toBe(1);
+
+    const rejectedNotifications = await prisma.notification.findMany({
+      where: {
+        userId: rejectedCase.founder.id,
+        type: 'APPLICATION_REJECTED',
+      },
+      include: {
+        deliveries: true,
+      },
+    });
+    expect(rejectedNotifications).toHaveLength(1);
+    expect(rejectedNotifications[0]).toMatchObject({
+      type: 'APPLICATION_REJECTED',
+      title: 'Application not approved',
+      body: 'Your FounderChatters application was not approved.',
+      href: '/application',
+      deliveries: [
+        {
+          channel: 'EMAIL',
+          templateVersion: 'v1',
+          status: 'QUEUED',
+          attemptCount: 0,
+        },
+      ],
+    });
+    expect(JSON.stringify(rejectedNotifications)).not.toContain(
+      'Not a current builder.',
+    );
   });
 
   it('rejects origin-less mutations and invalid states from NEEDS_INFO', async () => {
@@ -1049,10 +1133,31 @@ describe('admin application review HTTP integration', () => {
     );
     expect(founderBody.application).not.toHaveProperty('actorUserId');
     expect(JSON.stringify(founderBody)).not.toContain(admin.id);
-    await request('/v1/application/me/resubmit', founder.cookie, {
-      method: 'POST',
-      body: '{}',
+
+    const notificationsBeforeResubmit = await prisma.notification.count({
+      where: {
+        userId: founder.id,
+      },
     });
+
+    const resubmit = await request(
+      '/v1/application/me/resubmit',
+      founder.cookie,
+      {
+        method: 'POST',
+        body: '{}',
+      },
+    );
+    expect(resubmit.status).toBe(200);
+
+    expect(
+      await prisma.notification.count({
+        where: {
+          userId: founder.id,
+        },
+      }),
+    ).toBe(notificationsBeforeResubmit);
+
     await request(
       `/v1/admin/applications/${application.id}/approve`,
       admin.cookie,

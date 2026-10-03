@@ -4,6 +4,7 @@ import {
   ADMIN_ERROR_CODES,
   APPLICATION_ELIGIBILITY_ROLES,
   APPLICATION_ERROR_CODES,
+  NOTIFICATION_TYPES,
   type AdminApplicationDetail,
   type AdminApplicationDetailResponse,
   type AdminApplicationQueueItem,
@@ -15,6 +16,7 @@ import {
 
 import { PrismaService } from '../database/prisma.service.js';
 import { ApiError } from '../http/api-error.js';
+import { NotificationWriterService } from '../notifications/notification-writer.service.js';
 import { ADMIN_QUEUE_PAGE_SIZE } from './admin-application-input.js';
 import type { AdminPrincipal } from './admin-auth.service.js';
 import { AdminAuthService } from './admin-auth.service.js';
@@ -23,6 +25,7 @@ type ReviewableStatus = AdminApplicationQueueStatus;
 
 type ApplicationRow = {
   id: string;
+  userId: string;
   status: ApplicationStatus;
   eligibilityRole: string | null;
   companyName: string | null;
@@ -40,6 +43,7 @@ type ApplicationRow = {
 
 const applicationSelect = {
   id: true,
+  userId: true,
   status: true,
   eligibilityRole: true,
   companyName: true,
@@ -80,6 +84,8 @@ export class ApplicationReviewService {
     private readonly prisma: PrismaService,
     @Inject(AdminAuthService)
     private readonly auth: AdminAuthService,
+    @Inject(NotificationWriterService)
+    private readonly notifications: NotificationWriterService,
   ) {}
 
   async list(query: {
@@ -237,6 +243,41 @@ export class ApplicationReviewService {
           reason: decision.note,
         },
       });
+
+      const notification =
+        decision.toStatus === 'NEEDS_INFO'
+          ? {
+              type: NOTIFICATION_TYPES.applicationNeedsInfo,
+              title: 'More information needed',
+              body: 'Your application needs more information before review can continue.',
+            }
+          : decision.toStatus === 'APPROVED'
+            ? {
+                type: NOTIFICATION_TYPES.applicationApproved,
+                title: 'Application approved',
+                body: 'Your FounderChatters application has been approved.',
+              }
+            : {
+                type: NOTIFICATION_TYPES.applicationRejected,
+                title: 'Application not approved',
+                body: 'Your FounderChatters application was not approved.',
+              };
+
+      await this.notifications.create(
+        {
+          userId: current.userId,
+          type: notification.type,
+          title: notification.title,
+          body: notification.body,
+          href: '/application',
+          delivery: {
+            channel: 'EMAIL',
+            templateVersion: 'v1',
+          },
+        },
+        transaction,
+      );
+
       return transaction.founderApplication.findUniqueOrThrow({
         where: { id: current.id },
         select: applicationSelect,

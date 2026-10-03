@@ -2,6 +2,7 @@ import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import {
   CONVERSATION_STATUSES,
   MESSAGING_ERROR_CODES,
+  NOTIFICATION_TYPES,
   REQUEST_STATUSES,
   RESPONSE_TYPES,
   type ConversationCreatedResponse,
@@ -24,6 +25,7 @@ import { Prisma as PrismaNamespace } from '../../../../generated/prisma/client.j
 
 import { PrismaService } from '../database/prisma.service.js';
 import { ApiError } from '../http/api-error.js';
+import { NotificationWriterService } from '../notifications/notification-writer.service.js';
 import {
   isTransactionConflict,
   isUniqueConstraintError,
@@ -145,6 +147,8 @@ export class ConversationsService {
     private readonly prisma: PrismaService,
     @Inject(MessagingRateLimiter)
     private readonly rateLimiter: MessagingRateLimiter,
+    @Inject(NotificationWriterService)
+    private readonly notifications: NotificationWriterService,
   ) {}
 
   async list(
@@ -370,6 +374,25 @@ export class ConversationsService {
           where: { id: conversationId },
           data: { updatedAt: created.createdAt },
         });
+
+        if (current.request) {
+          const senderName =
+            current.participants
+              .find((participant) => participant.userId === callerId)
+              ?.user.profile?.displayName?.trim() || 'A founder';
+
+          await this.notifications.create(
+            {
+              userId: counterpartId,
+              type: NOTIFICATION_TYPES.requestMessage,
+              title: 'New message',
+              body: `${senderName} sent you a message about "${current.request.headline}".`,
+              href: `/messages/${conversationId}`,
+            },
+            tx,
+          );
+        }
+
         messageSentEvent({
           messageId: created.id,
           conversationId,

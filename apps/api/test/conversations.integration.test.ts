@@ -788,6 +788,28 @@ describe('conversations HTTP integration', { timeout: 90_000 }, () => {
       after.updatedAt.toISOString(),
     );
 
+    const messageNotifications = await prisma.notification.findMany({
+      where: {
+        userId: helper.id,
+        type: 'REQUEST_MESSAGE',
+      },
+      select: {
+        type: true,
+        title: true,
+        body: true,
+        href: true,
+      },
+    });
+    expect(messageNotifications).toEqual([
+      {
+        type: 'REQUEST_MESSAGE',
+        title: 'New message',
+        body: 'Owner sent you a message about "Looking for UAE B2B launch help".',
+        href: `/messages/${conversationId}`,
+      },
+    ]);
+    expect(JSON.stringify(messageNotifications)).not.toContain('Hello there');
+
     const conflict = await json<{ error: { code: string; message: string } }>(
       await request(
         `/v1/conversations/${conversationId}/messages`,
@@ -1727,11 +1749,25 @@ describe('conversations HTTP integration', { timeout: 90_000 }, () => {
         where: { requestId },
       }),
     ).toBe(0);
-    expect(
-      await prisma.notification.count({
-        where: { userId: { in: [owner.id, helper.id, viewer.id] } },
-      }),
-    ).toBe(0);
+    const notifications = await prisma.notification.findMany({
+      where: { userId: { in: [owner.id, helper.id, viewer.id] } },
+      select: {
+        userId: true,
+        type: true,
+        title: true,
+        body: true,
+        href: true,
+      },
+    });
+    expect(notifications).toEqual([
+      {
+        userId: owner.id,
+        type: 'PRIVATE_HELP_OFFER',
+        title: 'Private help offered',
+        body: 'Helper offered to help privately.',
+        href: `/requests/${requestId}`,
+      },
+    ]);
     const ownerAfter = await json<MemberHelpResponsesResponse>(
       await request(`/v1/requests/${requestId}/responses`, owner.cookie),
     );

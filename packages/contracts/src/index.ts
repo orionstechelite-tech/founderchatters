@@ -809,6 +809,57 @@ export type MessageSentResponse = {
   message: MemberMessage;
 };
 
+export const NOTIFICATION_ERROR_CODES = {
+  invalidInput: 'NOTIFICATION_INVALID_INPUT',
+  notFound: 'NOTIFICATION_NOT_FOUND',
+} as const;
+
+export type NotificationErrorCode =
+  (typeof NOTIFICATION_ERROR_CODES)[keyof typeof NOTIFICATION_ERROR_CODES];
+
+export const NOTIFICATION_TYPES = {
+  requestAdvice: 'REQUEST_ADVICE',
+  privateHelpOffer: 'PRIVATE_HELP_OFFER',
+  introductionOffered: 'INTRODUCTION_OFFERED',
+  introductionAccepted: 'INTRODUCTION_ACCEPTED',
+  requestMessage: 'REQUEST_MESSAGE',
+  contributionRecorded: 'CONTRIBUTION_RECORDED',
+  applicationNeedsInfo: 'APPLICATION_NEEDS_INFO',
+  applicationApproved: 'APPLICATION_APPROVED',
+  applicationRejected: 'APPLICATION_REJECTED',
+} as const;
+
+export type NotificationType =
+  (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
+
+export const NOTIFICATION_LIMITS = {
+  pageSizeDefault: 20,
+  pageSizeMax: 50,
+} as const;
+
+export type MemberNotification = {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  href: string | null;
+  readAt: string | null;
+  createdAt: string;
+};
+
+export type MemberNotificationsResponse = {
+  notifications: MemberNotification[];
+  nextBefore: string | null;
+};
+
+export type MarkNotificationReadResponse = {
+  notification: MemberNotification;
+};
+
+export type MarkAllNotificationsReadResponse = {
+  updatedCount: number;
+};
+
 export const HELP_OUTCOMES = {
   helped: 'HELPED',
   stillTalking: 'STILL_TALKING',
