@@ -1,6 +1,8 @@
 import type {
   AdminApplicationDetailResponse,
   AdminApplicationQueueResponse,
+  AdminReportDetailResponse,
+  AdminReportQueueResponse,
 } from '@founderchatters/contracts';
 
 interface ApiErrorBody {
@@ -95,4 +97,53 @@ export function decideAdminApplication(
       body: JSON.stringify(body ?? {}),
     },
   );
+}
+
+async function adminReportRequest<T>(
+  path = '',
+  init: RequestInit = {},
+): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/v1/admin/reports${path}`, {
+      ...init,
+      credentials: 'include',
+      headers: {
+        'content-type': 'application/json',
+        ...init.headers,
+      },
+    });
+  } catch {
+    throw new AdminApiError(
+      'NETWORK_ERROR',
+      'We could not reach FounderChatters. Check your connection and try again.',
+    );
+  }
+  const payload = (await response.json().catch(() => ({}))) as ApiErrorBody;
+  if (!response.ok) {
+    throw new AdminApiError(
+      payload.error?.code ?? 'UNKNOWN_ERROR',
+      payload.error?.message ?? 'Something went wrong. Please try again.',
+      payload.error?.fieldErrors,
+    );
+  }
+  return payload as T;
+}
+
+export function loadAdminReports(query = '') {
+  return adminReportRequest<AdminReportQueueResponse>(query ? `?${query}` : '');
+}
+
+export function loadAdminReport(id: string) {
+  return adminReportRequest<AdminReportDetailResponse>(`/${id}`);
+}
+
+export function decideAdminReport(
+  id: string,
+  action: 'review' | 'dismiss' | 'enforce',
+) {
+  return adminReportRequest<AdminReportDetailResponse>(`/${id}/${action}`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
 }

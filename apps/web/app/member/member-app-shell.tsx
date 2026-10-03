@@ -70,6 +70,10 @@ export function MemberAppShell({
             router.replace('/onboarding');
             return;
           }
+          if (next.access.state === 'SUSPENDED') {
+            router.replace('/suspended');
+            return;
+          }
           router.replace('/signin');
           return;
         }
@@ -77,6 +81,13 @@ export function MemberAppShell({
       })
       .catch((error: unknown) => {
         if (cancelled) return;
+        if (
+          error instanceof OnboardingApiError &&
+          error.code === 'AUTH_ACCOUNT_SUSPENDED'
+        ) {
+          router.replace('/suspended');
+          return;
+        }
         if (
           error instanceof OnboardingApiError &&
           error.code === 'AUTH_SESSION_EXPIRED'

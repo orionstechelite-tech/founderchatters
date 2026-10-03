@@ -356,9 +356,9 @@ describe('auth/session HTTP integration', () => {
       const response = await request('/v1/auth/session', {
         headers: { cookie: activeCookie },
       });
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(200);
       await expect(response.json()).resolves.toMatchObject({
-        error: { code: 'AUTH_FORBIDDEN' },
+        access: { state: 'SUSPENDED' },
       });
     } finally {
       await prisma.user.update({

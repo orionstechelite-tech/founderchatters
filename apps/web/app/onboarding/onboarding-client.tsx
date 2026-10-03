@@ -140,6 +140,10 @@ export function OnboardingClient() {
           router.replace('/home');
           return;
         }
+        if (session.access.state === 'SUSPENDED') {
+          router.replace('/suspended');
+          return;
+        }
         const profile = await getOnboardingProfile();
         if (cancelled) return;
         applyPayload(profile, true);
@@ -150,6 +154,10 @@ export function OnboardingClient() {
         if (error instanceof OnboardingApiError) {
           if (error.code === 'AUTH_SESSION_EXPIRED') {
             router.replace('/signin');
+            return;
+          }
+          if (error.code === 'AUTH_ACCOUNT_SUSPENDED') {
+            router.replace('/suspended');
             return;
           }
           if (error.code === 'AUTH_EMAIL_NOT_VERIFIED') {

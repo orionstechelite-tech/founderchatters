@@ -26,6 +26,8 @@ import {
   memberRequestUrl,
   requestAuthorMeta,
 } from '../../member/member-format';
+import { BlockSheet } from '../../safety/block-sheet';
+import { ReportSheet } from '../../safety/report-sheet';
 import { RequestHelpThread } from './request-help-client';
 
 export function RequestDetailClient({
@@ -46,6 +48,9 @@ export function RequestDetailClient({
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [safety, setSafety] = useState<
+    'report-request' | 'report-founder' | 'block' | null
+  >(null);
   const [form, setForm] = useState({
     type: REQUEST_TYPES.ask as RequestType,
     headline: '',
@@ -340,7 +345,11 @@ export function RequestDetailClient({
             </>
           )}
 
-          <RequestHelpThread isOwner={isOwner} request={request} />
+          <RequestHelpThread
+            isOwner={isOwner}
+            request={request}
+            viewerId={viewerId}
+          />
         </article>
 
         <aside className="fc-request-sidebar">
@@ -394,7 +403,35 @@ export function RequestDetailClient({
                 ) : null}
               </div>
             </>
-          ) : null}
+          ) : (
+            <>
+              <hr />
+              <p className="fc-label">Safety</p>
+              <div className="fc-request-actions">
+                <Button
+                  onClick={() => setSafety('report-request')}
+                  type="button"
+                  variant="secondary"
+                >
+                  Report request
+                </Button>
+                <Button
+                  onClick={() => setSafety('report-founder')}
+                  type="button"
+                  variant="secondary"
+                >
+                  Report founder
+                </Button>
+                <Button
+                  onClick={() => setSafety('block')}
+                  type="button"
+                  variant="secondary"
+                >
+                  Block founder
+                </Button>
+              </div>
+            </>
+          )}
         </aside>
       </div>
 
@@ -439,6 +476,24 @@ export function RequestDetailClient({
           </div>
         </form>
       </dialog>
+      <ReportSheet
+        onClose={() => setSafety(null)}
+        open={safety === 'report-request'}
+        targetId={request.id}
+        targetType="REQUEST"
+      />
+      <ReportSheet
+        onClose={() => setSafety(null)}
+        open={safety === 'report-founder'}
+        targetId={request.author.id}
+        targetType="USER"
+      />
+      <BlockSheet
+        founderId={request.author.id}
+        founderName={request.author.displayName}
+        onClose={() => setSafety(null)}
+        open={safety === 'block'}
+      />
     </div>
   );
 }

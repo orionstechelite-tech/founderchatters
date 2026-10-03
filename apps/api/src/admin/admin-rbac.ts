@@ -34,7 +34,40 @@ const PERMISSION_DESCRIPTIONS: Record<AdminPermission, string> = {
     'Return a submitted application for more information',
   'admin.applications.approve': 'Approve a submitted founder application',
   'admin.applications.reject': 'Reject a submitted founder application',
+  'admin.reports.read':
+    'Read the member report queue and report-scoped evidence',
+  'admin.reports.moderate': 'Review, dismiss, or enforce member reports',
+  'admin.members.suspend': 'Suspend a member as report enforcement',
 };
+
+const APPLICATION_PERMISSIONS: AdminPermission[] = [
+  ADMIN_PERMISSIONS.applicationsRead,
+  ADMIN_PERMISSIONS.applicationsNeedsInfo,
+  ADMIN_PERMISSIONS.applicationsApprove,
+  ADMIN_PERMISSIONS.applicationsReject,
+];
+
+const SAFETY_PERMISSIONS: AdminPermission[] = [
+  ADMIN_PERMISSIONS.reportsRead,
+  ADMIN_PERMISSIONS.reportsModerate,
+  ADMIN_PERMISSIONS.membersSuspend,
+];
+
+function permissionsForRole(roleKey: string): AdminPermission[] {
+  if (roleKey === ADMIN_ROLES.superAdmin) {
+    return Object.values(ADMIN_PERMISSIONS);
+  }
+  if (
+    roleKey === ADMIN_ROLES.applicationReviewer ||
+    roleKey === ADMIN_ROLES.operations
+  ) {
+    return APPLICATION_PERMISSIONS;
+  }
+  if (roleKey === ADMIN_ROLES.moderator) {
+    return SAFETY_PERMISSIONS;
+  }
+  return [];
+}
 
 /**
  * Test/local fictional RBAC catalog helper.
@@ -68,9 +101,7 @@ export async function ensureAdminRbac(
   );
 
   for (const role of roles) {
-    const shouldGrant = (ADMIN_REVIEW_ROLE_KEYS as readonly string[]).includes(
-      role.key,
-    );
+    const granted = new Set(permissionsForRole(role.key));
     for (const permission of permissions) {
       const existing = await prisma.rolePermission.findUnique({
         where: {
@@ -80,6 +111,7 @@ export async function ensureAdminRbac(
           },
         },
       });
+      const shouldGrant = granted.has(permission.key as AdminPermission);
       if (shouldGrant && !existing) {
         await prisma.rolePermission.create({
           data: { roleId: role.id, permissionId: permission.id },

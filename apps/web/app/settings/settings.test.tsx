@@ -580,8 +580,8 @@ describe('FC-016 settings', () => {
       /Save privacy settings|type=["']checkbox["']/,
     );
 
-    expect(blockedText).toContain('does not expose or mutate block records');
-    expect(blockedSource).not.toMatch(/unblockMember|blockMember|reportMember/);
+    expect(blockedText).toContain('BlockedSettingsClient');
+    expect(blockedSource).not.toMatch(/reportMember/);
   });
 
   it('contains the canonical 390 Settings responsive and touch-target rules', () => {

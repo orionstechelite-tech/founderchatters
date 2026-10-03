@@ -27,6 +27,10 @@ import type {
   UpdateMemberProfileSettingsRequest,
   ChangePasswordRequest,
   ChangePasswordResponse,
+  CreateReportRequest,
+  MemberReportCreatedResponse,
+  BlockedFoundersResponse,
+  BlockMutationResponse,
   UpsertRequestBody,
 } from '@founderchatters/contracts';
 
@@ -385,6 +389,44 @@ export function signOutMember(): Promise<void> {
   return onboardingRequest<void>('auth/signout', {
     method: 'POST',
   });
+}
+
+export function createMemberReport(
+  body: CreateReportRequest,
+): Promise<MemberReportCreatedResponse> {
+  return onboardingRequest<MemberReportCreatedResponse>('reports', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export function listBlockedFounders(
+  input: { page?: number; pageSize?: number } = {},
+): Promise<BlockedFoundersResponse> {
+  const params = new URLSearchParams();
+  if (input.page && input.page > 1) params.set('page', String(input.page));
+  if (input.pageSize) params.set('pageSize', String(input.pageSize));
+  const query = params.toString();
+  return onboardingRequest<BlockedFoundersResponse>(
+    query ? `me/blocks?${query}` : 'me/blocks',
+  );
+}
+
+export function blockFounder(userId: string): Promise<BlockMutationResponse> {
+  return onboardingRequest<BlockMutationResponse>(
+    `me/blocks/${encodeURIComponent(userId)}`,
+    {
+      method: 'POST',
+      body: JSON.stringify({}),
+    },
+  );
+}
+
+export function unblockFounder(userId: string): Promise<BlockMutationResponse> {
+  return onboardingRequest<BlockMutationResponse>(
+    `me/blocks/${encodeURIComponent(userId)}`,
+    { method: 'DELETE' },
+  );
 }
 
 export function getMyReputation(

@@ -110,7 +110,11 @@ export function ApplicationClient() {
           const session = await authSessionRequest();
           if (cancelled) return;
           router.replace(
-            session.access.state === 'ACTIVE' ? '/home' : '/onboarding',
+            session.access.state === 'ACTIVE'
+              ? '/home'
+              : session.access.state === 'SUSPENDED'
+                ? '/suspended'
+                : '/onboarding',
           );
         }
       })
@@ -135,6 +139,13 @@ export function ApplicationClient() {
           error.code === 'AUTH_SESSION_EXPIRED'
         ) {
           router.replace('/signin');
+          return;
+        }
+        if (
+          error instanceof ApplicationApiError &&
+          error.code === 'AUTH_ACCOUNT_SUSPENDED'
+        ) {
+          router.replace('/suspended');
           return;
         }
         if (
@@ -188,7 +199,11 @@ export function ApplicationClient() {
     if (current.status === 'APPROVED') {
       const session = await authSessionRequest();
       router.replace(
-        session.access.state === 'ACTIVE' ? '/home' : '/onboarding',
+        session.access.state === 'ACTIVE'
+          ? '/home'
+          : session.access.state === 'SUSPENDED'
+            ? '/suspended'
+            : '/onboarding',
       );
     }
   }

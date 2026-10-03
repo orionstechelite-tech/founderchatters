@@ -16,6 +16,8 @@ import {
   unsaveFounder,
 } from '../../member/member-api';
 import { initialsFrom, profileMeta } from '../../member/member-format';
+import { BlockSheet } from '../../safety/block-sheet';
+import { ReportSheet } from '../../safety/report-sheet';
 
 export function FounderProfileClient({ founderId }: { founderId: string }) {
   const [founder, setFounder] = useState<MemberFounderProfile | null>(null);
@@ -24,6 +26,8 @@ export function FounderProfileClient({ founderId }: { founderId: string }) {
   );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -131,6 +135,20 @@ export function FounderProfileClient({ founderId }: { founderId: string }) {
               variant={founder.savedByMe ? 'primary' : 'secondary'}
             >
               {founder.savedByMe ? 'Saved' : 'Save founder'}
+            </Button>
+            <Button
+              onClick={() => setReportOpen(true)}
+              type="button"
+              variant="secondary"
+            >
+              Report founder
+            </Button>
+            <Button
+              onClick={() => setBlockOpen(true)}
+              type="button"
+              variant="secondary"
+            >
+              Block founder
             </Button>
           </div>
         )}
@@ -246,6 +264,18 @@ export function FounderProfileClient({ founderId }: { founderId: string }) {
           {error}
         </p>
       ) : null}
+      <ReportSheet
+        onClose={() => setReportOpen(false)}
+        open={reportOpen}
+        targetId={founder.id}
+        targetType="USER"
+      />
+      <BlockSheet
+        founderId={founder.id}
+        founderName={founder.displayName}
+        onClose={() => setBlockOpen(false)}
+        open={blockOpen}
+      />
     </article>
   );
 }
