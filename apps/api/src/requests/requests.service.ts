@@ -17,6 +17,10 @@ import type { Prisma } from '../../../../generated/prisma/client.js';
 
 import { PrismaService } from '../database/prisma.service.js';
 import { ApiError } from '../http/api-error.js';
+import {
+  deletedFounderSummary,
+  isDeletedAccount,
+} from '../identity/deleted-founder.js';
 import { lockRequest, lockUser, withRequestRowRetry } from './request-locks.js';
 import {
   assertDraftBounds,
@@ -155,7 +159,11 @@ export class RequestsService {
     if (!this.isMemberVisible(row, isOwner)) {
       throw requestNotFound();
     }
-    if (!isOwner && !this.authorIsEligible(row.author)) {
+    if (
+      !isOwner &&
+      !this.authorIsEligible(row.author) &&
+      !isDeletedAccount(row.author)
+    ) {
       throw requestNotFound();
     }
     return { request: this.toMemberRequest(row, isOwner) };
@@ -549,6 +557,9 @@ export class RequestsService {
   }
 
   private toAuthor(row: StoredRequest, isOwner: boolean): MemberRequestAuthor {
+    if (isDeletedAccount(row.author)) {
+      return deletedFounderSummary(row.author.id);
+    }
     const profile = row.author.profile;
     const company = profile?.company;
     return {

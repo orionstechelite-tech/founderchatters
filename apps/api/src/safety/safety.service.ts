@@ -78,7 +78,10 @@ export class SafetyService {
     query: Record<string, unknown>,
   ): Promise<BlockedFoundersResponse> {
     const parsed = parseSafetyPage(query);
-    const where = { blockerId: callerId };
+    const where = {
+      blockerId: callerId,
+      blocked: { is: { deletedAt: null, status: { not: 'DELETED' as const } } },
+    };
     const [total, rows] = await Promise.all([
       this.prisma.block.count({ where }),
       this.prisma.block.findMany({

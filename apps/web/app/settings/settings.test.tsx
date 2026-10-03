@@ -92,13 +92,21 @@ function response(body: unknown, status = 200): Response {
   });
 }
 
-function mockApi() {
+function mockApi(
+  extra?: (
+    url: string,
+    method: string,
+    init?: RequestInit,
+  ) => Response | null | Promise<Response | null>,
+) {
   let sessions = [...sessionsResponse.sessions];
 
   const fetchMock = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       const method = init?.method ?? 'GET';
+      const override = extra ? await extra(url, method, init) : null;
+      if (override) return override;
 
       if (url.endsWith('/v1/auth/session') && method === 'GET') {
         return response(activeSession);
@@ -377,7 +385,9 @@ describe('FC-016 settings', () => {
     expect(screen.getByText('Verified')).toBeVisible();
     expect(screen.getByText('Active')).toBeVisible();
 
-    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Type DELETE to confirm'),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/change email/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/phone/i)).not.toBeInTheDocument();
     expect(
@@ -591,5 +601,101 @@ describe('FC-016 settings', () => {
     expect(css).toContain('.fc-member-shell__content:has(.fc-settings)');
     expect(css).toContain('overflow-x: hidden');
     expect(css).toContain('min-height: 44px');
+  });
+
+  it('requires typed DELETE confirmation before submitting account deletion', async () => {
+    const user = userEvent.setup({ delay: null });
+    let failOnce = true;
+    mockApi(async (url, method, init) => {
+      if (url.endsWith('/v1/me/account/delete') && method === 'POST') {
+        const body = JSON.parse(String(init?.body ?? '{}')) as {
+          confirmation?: string;
+        };
+        expect(body.confirmation).toBe('DELETE');
+        if (failOnce) {
+          failOnce = false;
+          return new Response(
+            JSON.stringify({
+              error: {
+                code: 'ACCOUNT_DELETION_CONFIRMATION_REQUIRED',
+                message: 'Type DELETE to confirm account deletion.',
+              },
+            }),
+            {
+              status: 400,
+              headers: { 'content-type': 'application/json' },
+            },
+          );
+        }
+        return new Response(null, { status: 204 });
+      }
+      return null;
+    });
+
+    render(<AccountSettingsClient />);
+    expect(await screen.findByText('founder@example.com')).toBeVisible();
+    expect(
+      screen.getByRole('heading', { name: 'Delete account' }),
+    ).toBeVisible();
+    expect(screen.queryByText(/retention period of/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Delete account' }));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('Delete your account?')).toBeVisible();
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
+    expect(within(dialog).getByText(/anonymization rules/i)).toBeVisible();
+    expect(
+      within(dialog).getByText(/may retain anonymized records/i),
+    ).toBeVisible();
+    const confirm = within(dialog).getByLabelText('Type DELETE to confirm');
+    const submit = within(dialog).getByRole('button', {
+      name: 'Delete account',
+    });
+    expect(submit).toBeDisabled();
+    expect(confirm).toHaveFocus();
+
+    await user.type(confirm, 'delete');
+    expect(submit).toBeDisabled();
+    await user.clear(confirm);
+    await user.type(confirm, 'DELETE');
+    expect(submit).toBeEnabled();
+    await user.click(submit);
+    expect(
+      await screen.findByText('Type DELETE to confirm account deletion.'),
+    ).toBeVisible();
+    expect(confirm).toHaveValue('DELETE');
+    await user.click(submit);
+    await waitFor(() => {
+      expect(navigation.replace).toHaveBeenCalledWith('/signin');
+    });
+  });
+
+  it('closes the delete-account sheet with Escape and stays accessible', async () => {
+    const user = userEvent.setup({ delay: null });
+    mockApi();
+    const { container } = render(<AccountSettingsClient />);
+    await screen.findByText('founder@example.com');
+    await user.click(screen.getByRole('button', { name: 'Delete account' }));
+    const dialog = screen.getByRole('dialog');
+    await expectAccessible(container);
+    await user.keyboard('{Escape}');
+    expect(dialog).not.toBeInTheDocument();
+    expect(screen.queryByText('Delete your account?')).not.toBeInTheDocument();
+  });
+
+  it('cancels account deletion without calling the API', async () => {
+    const user = userEvent.setup({ delay: null });
+    const fetchMock = mockApi();
+    render(<AccountSettingsClient />);
+    await screen.findByText('founder@example.com');
+    await user.click(screen.getByRole('button', { name: 'Delete account' }));
+    await user.type(screen.getByLabelText('Type DELETE to confirm'), 'DELETE');
+    await user.click(screen.getByRole('button', { name: 'Keep my account' }));
+    expect(screen.queryByText('Delete your account?')).not.toBeInTheDocument();
+    expect(
+      fetchMock.mock.calls.some(([url]) =>
+        String(url).endsWith('/v1/me/account/delete'),
+      ),
+    ).toBe(false);
   });
 });

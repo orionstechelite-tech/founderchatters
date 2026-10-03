@@ -946,6 +946,23 @@ export type ChangePasswordRequest = {
   confirmPassword: string;
 };
 
+export const ACCOUNT_DELETION_ERROR_CODES = {
+  confirmationRequired: 'ACCOUNT_DELETION_CONFIRMATION_REQUIRED',
+} as const;
+
+export type AccountDeletionErrorCode =
+  (typeof ACCOUNT_DELETION_ERROR_CODES)[keyof typeof ACCOUNT_DELETION_ERROR_CODES];
+
+export const ACCOUNT_DELETION_CONFIRMATION = 'DELETE' as const;
+
+export const ACCOUNT_DELETION_AUDIT_ACTIONS = {
+  deleted: 'ACCOUNT_DELETED',
+} as const;
+
+export type DeleteAccountRequest = {
+  confirmation: typeof ACCOUNT_DELETION_CONFIRMATION;
+};
+
 export type ChangePasswordResponse = {
   changed: true;
   revokedSessionCount: number;
