@@ -14,6 +14,7 @@ import { FoundersModule } from './founders/founders.module.js';
 import { OnboardingModule } from './onboarding/onboarding.module.js';
 import { RequestIdMiddleware } from './http/request-id.middleware.js';
 import { ConversationsModule } from './conversations/conversations.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 import { RequestsModule } from './requests/requests.module.js';
 
 @Module({
@@ -25,6 +26,7 @@ import { RequestsModule } from './requests/requests.module.js';
     FoundersModule,
     RequestsModule,
     ConversationsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [

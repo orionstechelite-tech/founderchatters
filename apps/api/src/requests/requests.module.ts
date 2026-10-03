@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { AuthModule } from '../auth/auth.module.js';
 import { OriginGuard } from '../http/origin.guard.js';
+import { NotificationWriterService } from '../notifications/notification-writer.service.js';
 import { HelpResponsesController } from './help-responses.controller.js';
 import { HelpResponsesService } from './help-responses.service.js';
 import { HelpConfirmationsController } from './help-confirmations.controller.js';
@@ -23,6 +24,7 @@ import { RequestsService } from './requests.service.js';
   ],
   providers: [
     OriginGuard,
+    NotificationWriterService,
     RequestsService,
     HelpResponsesService,
     HelpConfirmationsService,

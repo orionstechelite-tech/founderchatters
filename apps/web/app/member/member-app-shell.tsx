@@ -31,6 +31,7 @@ function resolveActiveItem(
     return 'Messages';
   }
   if (pathname === '/reputation') return 'Profile';
+  if (pathname === '/notifications') return '';
   if (pathname.startsWith('/founders/')) {
     return pathname === `/founders/${userId}` ? 'Profile' : '';
   }

@@ -424,6 +424,85 @@ describe('help confirmation HTTP integration', { timeout: 60_000 }, () => {
     expect(
       await prisma.contribution.count({ where: { contributorId: helper.id } }),
     ).toBe(1);
+
+    const contributionNotifications = await prisma.notification.findMany({
+      where: {
+        userId: helper.id,
+        type: 'CONTRIBUTION_RECORDED',
+      },
+      select: {
+        type: true,
+        title: true,
+        body: true,
+        href: true,
+      },
+    });
+    expect(contributionNotifications).toEqual([
+      {
+        type: 'CONTRIBUTION_RECORDED',
+        title: 'Contribution recorded',
+        body: 'Sarah Chen confirmed your help. Advice confirmed helpful.',
+        href: '/reputation',
+      },
+    ]);
+
+    await prisma.contribution.delete({
+      where: {
+        helpConfirmationId: payload.confirmation.id,
+      },
+    });
+
+    const repaired = await request(
+      `/v1/requests/${requestId}/help-confirmations`,
+      owner.cookie,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          responseId,
+          outcome: 'HELPED',
+          topicIds: [],
+        }),
+      },
+    );
+    expect(repaired.status).toBe(200);
+    expect(
+      await prisma.contribution.count({ where: { contributorId: helper.id } }),
+    ).toBe(1);
+    expect(takeHelpConfirmationEvents().map((event) => event.type)).toEqual([
+      'contribution.created',
+    ]);
+    expect(
+      await prisma.notification.count({
+        where: {
+          userId: helper.id,
+          type: 'CONTRIBUTION_RECORDED',
+        },
+      }),
+    ).toBe(2);
+
+    const repairedReplay = await request(
+      `/v1/requests/${requestId}/help-confirmations`,
+      owner.cookie,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          responseId,
+          outcome: 'HELPED',
+          topicIds: [],
+        }),
+      },
+    );
+    expect(repairedReplay.status).toBe(200);
+    expect(takeHelpConfirmationEvents()).toEqual([]);
+    expect(
+      await prisma.notification.count({
+        where: {
+          userId: helper.id,
+          type: 'CONTRIBUTION_RECORDED',
+        },
+      }),
+    ).toBe(2);
+
     const conflict = await request(
       `/v1/requests/${requestId}/help-confirmations`,
       owner.cookie,
@@ -497,6 +576,15 @@ describe('help confirmation HTTP integration', { timeout: 60_000 }, () => {
       ),
     );
     expect(notHelpful.confirmation.outcome).toBe('NOT_HELPFUL');
+    expect(
+      await prisma.notification.count({
+        where: {
+          userId: helper.id,
+          type: 'CONTRIBUTION_RECORDED',
+        },
+      }),
+    ).toBe(0);
+
     const helped = await json<HelpConfirmationMutationResponse>(
       await request(
         `/v1/requests/${requestId}/help-confirmations`,

@@ -6,9 +6,11 @@ import { ApplicationReviewService } from '../src/admin/application-review.servic
 import type { AdminAuthService } from '../src/admin/admin-auth.service.js';
 import type { PrismaService } from '../src/database/prisma.service.js';
 import { ApiError } from '../src/http/api-error.js';
+import type { NotificationWriterService } from '../src/notifications/notification-writer.service.js';
 
 const submittedApplication = {
   id: 'application-1',
+  userId: 'applicant-1',
   status: 'SUBMITTED' as const,
   eligibilityRole: 'FOUNDER_COFOUNDER',
   companyName: 'Nexora',
@@ -75,13 +77,21 @@ function reviewService(
   const auth = {
     capabilities: () => ({ needsInfo: true, approve: true, reject: true }),
   };
+  const notificationCreate = vi.fn().mockResolvedValue({
+    id: 'notification-1',
+  });
+  const notifications = {
+    create: notificationCreate,
+  };
   return {
     auditCreate,
     eventCreate,
+    notificationCreate,
     prisma,
     service: new ApplicationReviewService(
       prisma as unknown as PrismaService,
       auth as unknown as AdminAuthService,
+      notifications as unknown as NotificationWriterService,
     ),
     tx,
   };

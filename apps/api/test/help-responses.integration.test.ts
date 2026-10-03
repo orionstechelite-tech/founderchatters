@@ -450,6 +450,46 @@ describe('help responses HTTP integration', { timeout: 60_000 }, () => {
       }),
     ).toBe(1);
 
+    const notifications = await prisma.notification.findMany({
+      where: { userId: owner.id },
+      select: {
+        type: true,
+        title: true,
+        body: true,
+        href: true,
+      },
+    });
+    expect(notifications).toHaveLength(3);
+    expect(notifications).toEqual(
+      expect.arrayContaining([
+        {
+          type: 'REQUEST_ADVICE',
+          title: 'New public advice',
+          body: 'Chaitanya responded to your request.',
+          href: `/requests/${requestId}`,
+        },
+        {
+          type: 'INTRODUCTION_OFFERED',
+          title: 'Introduction offered',
+          body: 'Chaitanya offered an introduction.',
+          href: `/requests/${requestId}`,
+        },
+        {
+          type: 'PRIVATE_HELP_OFFER',
+          title: 'Private help offered',
+          body: 'Chaitanya offered to help privately.',
+          href: `/requests/${requestId}`,
+        },
+      ]),
+    );
+    expect(JSON.stringify(notifications)).not.toContain(ADVICE);
+    expect(JSON.stringify(notifications)).not.toContain(
+      'Ravi Operator, FleetCo',
+    );
+    expect(JSON.stringify(notifications)).not.toContain(
+      'Can connect you with a founder in Abu Dhabi.',
+    );
+
     const listed = await json<MemberHelpResponsesResponse>(
       await request(`/v1/requests/${requestId}/responses`, owner.cookie),
     );
@@ -556,6 +596,28 @@ describe('help responses HTTP integration', { timeout: 60_000 }, () => {
     expect(again.status).toBe(200);
     const againBody = await json<HelpResponseMutationResponse>(again);
     expect(againBody.response.introduction?.status).toBe('INTRODUCED');
+
+    const acceptedNotifications = await prisma.notification.findMany({
+      where: {
+        userId: helper.id,
+        type: 'INTRODUCTION_ACCEPTED',
+      },
+      select: {
+        type: true,
+        title: true,
+        body: true,
+        href: true,
+      },
+    });
+    expect(acceptedNotifications).toEqual([
+      {
+        type: 'INTRODUCTION_ACCEPTED',
+        title: 'Introduction accepted',
+        body: 'Sarah accepted your introduction offer.',
+        href: `/requests/${requestId}`,
+      },
+    ]);
+    expect(JSON.stringify(acceptedNotifications)).not.toContain('Noura GTM');
 
     const otherId = await publishedRequest(owner.id);
     const pending = await json<HelpResponseMutationResponse>(

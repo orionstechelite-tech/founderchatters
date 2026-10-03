@@ -9,8 +9,11 @@ import type {
   MemberFounderProfileResponse,
   MemberHelpResponsesResponse,
   MemberMessagesResponse,
+  MemberNotificationsResponse,
   MemberReputationResponse,
   MemberRequestResponse,
+  MarkAllNotificationsReadResponse,
+  MarkNotificationReadResponse,
   MessageSentResponse,
   OwnRequestsResponse,
   RequestDeletedResponse,
@@ -283,6 +286,34 @@ export function createThankYouNote(
   return onboardingRequest<ThankYouMutationResponse>(
     `help-confirmations/${encodeURIComponent(confirmationId)}/thank-you`,
     { method: 'POST', body: JSON.stringify({ body }) },
+  );
+}
+
+export function listNotifications(
+  input: { before?: string; limit?: number } = {},
+): Promise<MemberNotificationsResponse> {
+  const params = new URLSearchParams();
+  if (input.before) params.set('before', input.before);
+  if (input.limit) params.set('limit', String(input.limit));
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return onboardingRequest<MemberNotificationsResponse>(
+    `notifications${suffix}`,
+  );
+}
+
+export function markNotificationRead(
+  id: string,
+): Promise<MarkNotificationReadResponse> {
+  return onboardingRequest<MarkNotificationReadResponse>(
+    `notifications/${encodeURIComponent(id)}/read`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
+}
+
+export function markAllNotificationsRead(): Promise<MarkAllNotificationsReadResponse> {
+  return onboardingRequest<MarkAllNotificationsReadResponse>(
+    'notifications/read-all',
+    { method: 'POST', body: JSON.stringify({}) },
   );
 }
 

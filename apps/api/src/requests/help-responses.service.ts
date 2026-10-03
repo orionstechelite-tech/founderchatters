@@ -1,6 +1,7 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import {
   INTRODUCTION_STATUSES,
+  NOTIFICATION_TYPES,
   REQUEST_ERROR_CODES,
   REQUEST_STATUSES,
   RESPONSE_TYPES,
@@ -18,6 +19,7 @@ import type { Prisma } from '../../../../generated/prisma/client.js';
 
 import { PrismaService } from '../database/prisma.service.js';
 import { ApiError } from '../http/api-error.js';
+import { NotificationWriterService } from '../notifications/notification-writer.service.js';
 import {
   helpNotAllowed,
   introductionInvalidState,
@@ -87,6 +89,8 @@ export class HelpResponsesService {
     private readonly prisma: PrismaService,
     @Inject(HelpConfirmationsService)
     private readonly confirmations: HelpConfirmationsService,
+    @Inject(NotificationWriterService)
+    private readonly notifications: NotificationWriterService,
   ) {}
 
   async list(
@@ -286,7 +290,7 @@ export class HelpResponsesService {
         parsePrivateChatBody(body);
       }
 
-      return tx.requestResponse.create({
+      const created = await tx.requestResponse.create({
         data: {
           requestId: id,
           authorId: callerId,
@@ -306,6 +310,46 @@ export class HelpResponsesService {
         },
         include: responseInclude,
       });
+
+      const actorName =
+        created.author.profile?.displayName?.trim() || 'A founder';
+
+      if (type === RESPONSE_TYPES.advice) {
+        await this.notifications.create(
+          {
+            userId: request!.authorId,
+            type: NOTIFICATION_TYPES.requestAdvice,
+            title: 'New public advice',
+            body: `${actorName} responded to your request.`,
+            href: `/requests/${id}`,
+          },
+          tx,
+        );
+      } else if (type === RESPONSE_TYPES.privateChatOffer) {
+        await this.notifications.create(
+          {
+            userId: request!.authorId,
+            type: NOTIFICATION_TYPES.privateHelpOffer,
+            title: 'Private help offered',
+            body: `${actorName} offered to help privately.`,
+            href: `/requests/${id}`,
+          },
+          tx,
+        );
+      } else if (type === RESPONSE_TYPES.introductionOffer) {
+        await this.notifications.create(
+          {
+            userId: request!.authorId,
+            type: NOTIFICATION_TYPES.introductionOffered,
+            title: 'Introduction offered',
+            body: `${actorName} offered an introduction.`,
+            href: `/requests/${id}`,
+          },
+          tx,
+        );
+      }
+
+      return created;
     });
     return {
       response: this.toMemberResponse(
@@ -389,6 +433,20 @@ export class HelpResponsesService {
             introducedAt: now,
           },
         });
+
+        const requesterName =
+          request.author.profile?.displayName?.trim() || 'A founder';
+
+        await this.notifications.create(
+          {
+            userId: current.response.authorId,
+            type: NOTIFICATION_TYPES.introductionAccepted,
+            title: 'Introduction accepted',
+            body: `${requesterName} accepted your introduction offer.`,
+            href: `/requests/${request.id}`,
+          },
+          tx,
+        );
       } else if (action === 'decline') {
         if (!isOwner) throw introductionNotFound();
         if (current.status === INTRODUCTION_STATUSES.declined) {
