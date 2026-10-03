@@ -14,11 +14,19 @@ import type {
   MemberRequestResponse,
   MarkAllNotificationsReadResponse,
   MarkNotificationReadResponse,
+  MemberAccountSettingsResponse,
+  MemberProfileSettingsResponse,
+  MemberSessionsResponse,
   MessageSentResponse,
+  OtherSessionsRevokedResponse,
   OwnRequestsResponse,
   RequestDeletedResponse,
   SavedFounderMutationResponse,
+  SessionRevokedResponse,
   ThankYouMutationResponse,
+  UpdateMemberProfileSettingsRequest,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
   UpsertRequestBody,
 } from '@founderchatters/contracts';
 
@@ -315,6 +323,68 @@ export function markAllNotificationsRead(): Promise<MarkAllNotificationsReadResp
     'notifications/read-all',
     { method: 'POST', body: JSON.stringify({}) },
   );
+}
+
+export function getProfileSettings(): Promise<MemberProfileSettingsResponse> {
+  return onboardingRequest<MemberProfileSettingsResponse>(
+    'me/settings/profile',
+  );
+}
+
+export function updateProfileSettings(
+  body: UpdateMemberProfileSettingsRequest,
+): Promise<MemberProfileSettingsResponse> {
+  return onboardingRequest<MemberProfileSettingsResponse>(
+    'me/settings/profile',
+    {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    },
+  );
+}
+
+export function getAccountSettings(): Promise<MemberAccountSettingsResponse> {
+  return onboardingRequest<MemberAccountSettingsResponse>(
+    'me/settings/account',
+  );
+}
+
+export function listMemberSessions(): Promise<MemberSessionsResponse> {
+  return onboardingRequest<MemberSessionsResponse>('me/sessions');
+}
+
+export function revokeMemberSession(
+  sessionId: string,
+): Promise<SessionRevokedResponse> {
+  return onboardingRequest<SessionRevokedResponse>(
+    `me/sessions/${encodeURIComponent(sessionId)}`,
+    { method: 'DELETE' },
+  );
+}
+
+export function revokeOtherMemberSessions(): Promise<OtherSessionsRevokedResponse> {
+  return onboardingRequest<OtherSessionsRevokedResponse>(
+    'me/sessions/revoke-others',
+    {
+      method: 'POST',
+      body: JSON.stringify({}),
+    },
+  );
+}
+
+export function changeMemberPassword(
+  body: ChangePasswordRequest,
+): Promise<ChangePasswordResponse> {
+  return onboardingRequest<ChangePasswordResponse>('me/password', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export function signOutMember(): Promise<void> {
+  return onboardingRequest<void>('auth/signout', {
+    method: 'POST',
+  });
 }
 
 export function getMyReputation(
