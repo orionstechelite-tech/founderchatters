@@ -76,6 +76,7 @@
 .fc-filter-sheet input:focus-visible,
 .fc-filter-sheet select:focus-visible,
 .fc-marketing-shell a:focus-visible,
+.fc-marketing-menu summary:focus-visible,
 .fc-admin-shell a:focus-visible,
 .fc-mobile-menu:focus-visible {
   outline: 3px solid var(--fc-color-blue);
@@ -139,6 +140,7 @@
   padding: 0 var(--fc-space-4);
   width: 100%;
 }
+select.fc-field__control,
 textarea.fc-field__control {
   height: 136px;
   padding-block: var(--fc-space-4);
@@ -320,6 +322,7 @@ textarea.fc-field__control {
   align-items: center;
   display: flex;
   height: 88px;
+  position: relative;
 }
 .fc-marketing-header__nav {
   display: flex;
@@ -346,7 +349,38 @@ textarea.fc-field__control {
   min-height: 440px;
   min-width: 0;
   overflow-wrap: anywhere;
-  padding-block: var(--fc-space-20);
+  padding-block: var(--fc-space-10) var(--fc-space-16);
+}
+.fc-marketing-menu {
+  display: none;
+}
+.fc-marketing-menu summary {
+  cursor: pointer;
+  font: 700 13px var(--fc-font-sans);
+  list-style: none;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 12px 8px;
+}
+.fc-marketing-menu summary::-webkit-details-marker {
+  display: none;
+}
+.fc-marketing-menu nav {
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 16px;
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  position: absolute;
+  right: var(--fc-space-5);
+  top: 72px;
+  width: min(280px, calc(100vw - 40px));
+  z-index: 20;
+}
+.fc-marketing-menu a {
+  min-height: 44px;
+  padding: 12px;
 }
 .fc-marketing-footer {
   background: var(--fc-color-inverse);
@@ -369,8 +403,11 @@ textarea.fc-field__control {
   gap: var(--fc-space-3);
 }
 .fc-marketing-footer a {
+  align-items: center;
   color: var(--fc-color-text-inverse);
+  display: inline-flex;
   font: 500 14px var(--fc-font-sans);
+  min-height: 44px;
   text-decoration: none;
 }
 .fc-marketing-footer small {
@@ -596,15 +633,10 @@ textarea.fc-field__control {
   .fc-header-cta {
     display: none;
   }
-  .fc-mobile-menu {
-    background: none;
-    border: 0;
-    color: var(--fc-color-text);
+  .fc-mobile-menu,
+  .fc-marketing-menu {
     display: block;
-    font: 700 13px var(--fc-font-sans);
     margin-left: auto;
-    min-height: 44px;
-    min-width: 44px;
   }
   .fc-marketing-shell__content {
     min-height: 360px;
@@ -684,5 +716,192 @@ textarea.fc-field__control {
   }
   .fc-member-nav-item[aria-current='page']::before {
     background: currentColor;
+  }
+}
+.fc-mkt-stack {
+  display: grid;
+  gap: var(--fc-space-12);
+  padding-bottom: var(--fc-space-8);
+}
+.fc-mkt-hero,
+.fc-mkt-panel,
+.fc-mkt-card,
+.fc-mkt-example,
+.fc-mkt-cta {
+  border-radius: 22px;
+  min-width: 0;
+}
+.fc-mkt-hero,
+.fc-mkt-card,
+.fc-mkt-example {
+  background: var(--fc-color-page);
+  border: 1px solid var(--fc-color-border);
+  padding: var(--fc-space-8);
+}
+.fc-mkt-hero {
+  display: grid;
+  gap: var(--fc-space-10);
+}
+.fc-mkt-hero__copy,
+.fc-mkt-hero__aside {
+  min-width: 0;
+}
+.fc-mkt-hero__aside,
+.fc-mkt-panel,
+.fc-mkt-cta {
+  background: var(--fc-color-inverse);
+  color: var(--fc-color-text-inverse);
+  padding: var(--fc-space-8);
+}
+.fc-mkt-hero__aside {
+  border-radius: 22px;
+}
+.fc-mkt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fc-space-3);
+}
+.fc-mkt-actions a {
+  text-decoration: none;
+}
+.fc-mkt-kicker {
+  color: var(--fc-color-text-secondary);
+  margin: 0 0 var(--fc-space-3);
+}
+.fc-mkt-hero__aside .fc-mkt-kicker,
+.fc-mkt-panel .fc-mkt-kicker,
+.fc-mkt-cta .fc-mkt-kicker {
+  color: var(--fc-color-accent);
+}
+.fc-mkt-grid {
+  display: grid;
+  gap: var(--fc-space-5);
+}
+.fc-mkt-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.fc-mkt-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.fc-mkt-card {
+  background: var(--fc-color-surface);
+  display: grid;
+  gap: var(--fc-space-3);
+}
+.fc-mkt-card--sand {
+  background: var(--fc-color-page);
+}
+.fc-mkt-card p,
+.fc-mkt-hero p,
+.fc-mkt-panel p,
+.fc-mkt-example p,
+.fc-mkt-cta p,
+.fc-mkt-prose p,
+.fc-mkt-faq p {
+  margin: 0;
+}
+.fc-mkt-card ul,
+.fc-mkt-prose ul {
+  margin: 0;
+  padding-left: 1.1em;
+}
+.fc-mkt-list {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.fc-mkt-section-head {
+  display: grid;
+  gap: var(--fc-space-3);
+  max-width: 52rem;
+}
+.fc-mkt-section-head h2,
+.fc-mkt-card h2,
+.fc-mkt-card h3,
+.fc-mkt-panel h2,
+.fc-mkt-example h2,
+.fc-mkt-cta h2,
+.fc-mkt-prose h2 {
+  margin: 0;
+}
+.fc-mkt-compare {
+  display: grid;
+  gap: var(--fc-space-8);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.fc-mkt-faq {
+  background: var(--fc-color-surface);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 16px;
+  padding: 18px 20px;
+}
+.fc-mkt-faq summary {
+  cursor: pointer;
+  font: 600 24px/1.2 var(--fc-font-sans);
+  min-height: 44px;
+}
+.fc-mkt-faq p {
+  color: var(--fc-color-text-secondary);
+  margin-top: var(--fc-space-3);
+}
+.fc-mkt-prose {
+  display: grid;
+  gap: var(--fc-space-5);
+  max-width: 46rem;
+}
+.fc-mkt-prose a {
+  color: inherit;
+}
+.fc-mkt-form {
+  display: grid;
+  gap: var(--fc-space-5);
+  max-width: 40rem;
+}
+.fc-mkt-success {
+  background: var(--fc-color-page);
+  border: 1px solid var(--fc-color-border);
+  border-radius: 22px;
+  display: grid;
+  gap: var(--fc-space-4);
+  padding: var(--fc-space-8);
+}
+.fc-mkt-note {
+  color: var(--fc-color-text-secondary);
+}
+.fc-mkt-card-link {
+  color: inherit;
+  display: block;
+  text-decoration: none;
+}
+@media (min-width: 900px) {
+  .fc-mkt-hero {
+    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+    padding: var(--fc-space-10);
+  }
+}
+@media (max-width: 1024px) {
+  .fc-mkt-grid--3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 768px) {
+  .fc-mkt-grid--2,
+  .fc-mkt-grid--3,
+  .fc-mkt-compare {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .fc-mkt-hero,
+  .fc-mkt-card,
+  .fc-mkt-example,
+  .fc-mkt-panel,
+  .fc-mkt-cta {
+    padding: var(--fc-space-6);
+  }
+  .fc-mkt-form,
+  .fc-mkt-form .fc-field,
+  .fc-mkt-form .fc-field__control {
+    width: 100%;
   }
 }

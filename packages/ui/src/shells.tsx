@@ -51,6 +51,25 @@ export function MemberShell({
   );
 }
 
+const marketingHeaderLinks = [
+  { href: '/how-it-works', label: 'How it works' },
+  { href: '/for-founders', label: 'For founders' },
+  { href: '/guidelines', label: 'Guidelines' },
+  { href: '/signin', label: 'Sign in' },
+] as const;
+
+const marketingFooterLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/how-it-works', label: 'How it works' },
+  { href: '/for-founders', label: 'For founders' },
+  { href: '/guidelines', label: 'Guidelines' },
+  { href: '/support', label: 'Support' },
+  { href: '/privacy', label: 'Privacy' },
+  { href: '/terms', label: 'Terms' },
+  { href: '/signin', label: 'Sign in' },
+  { href: '/signup', label: 'Join' },
+] as const;
+
 export function MarketingHeader() {
   return (
     <header className="fc-marketing-header">
@@ -62,21 +81,26 @@ export function MarketingHeader() {
           aria-label="Public navigation"
           className="fc-marketing-header__nav"
         >
-          <a href="#about">About</a>
-          <a href="#how">How it works</a>
-          <a href="#stories">Founder stories</a>
+          {marketingHeaderLinks.map((item) => (
+            <a href={item.href} key={item.href}>
+              {item.label}
+            </a>
+          ))}
         </nav>
-        <a className="fc-header-cta" href="#join">
-          Join the network
+        <a className="fc-header-cta" href="/signup">
+          Join FounderChatters
         </a>
-        <button
-          aria-expanded="false"
-          aria-label="Open navigation menu"
-          className="fc-mobile-menu"
-          type="button"
-        >
-          Menu
-        </button>
+        <details className="fc-marketing-menu">
+          <summary>Menu</summary>
+          <nav aria-label="Public menu">
+            {marketingHeaderLinks.map((item) => (
+              <a href={item.href} key={`menu-${item.href}`}>
+                {item.label}
+              </a>
+            ))}
+            <a href="/signup">Join FounderChatters</a>
+          </nav>
+        </details>
       </div>
     </header>
   );
@@ -90,15 +114,18 @@ export function MarketingFooter() {
           <div className="fc-wordmark fc-wordmark--inverse">
             FounderChatters
           </div>
-          <p>Founders helping founders, one useful conversation at a time.</p>
+          <p>
+            Founder-to-founder support built around useful asks and real help.
+          </p>
         </div>
         <nav aria-label="Footer navigation">
-          <a href="#about">About</a>
-          <a href="#support">Support</a>
-          <a href="#privacy">Privacy</a>
-          <a href="#terms">Terms</a>
+          {marketingFooterLinks.map((item) => (
+            <a href={item.href} key={item.href}>
+              {item.label}
+            </a>
+          ))}
         </nav>
-        <small>© FounderChatters</small>
+        <small>FounderChatters · Public website</small>
       </div>
     </footer>
   );

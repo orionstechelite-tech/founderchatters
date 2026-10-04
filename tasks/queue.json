@@ -306,7 +306,7 @@
       "id": "FC-020",
       "title": "Public marketing and support",
       "phase": "public",
-      "status": "pending",
+      "status": "completed",
       "authorization": "AUTO_LOCAL",
       "depends_on": [
         "FC-004",
