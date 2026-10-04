@@ -422,6 +422,7 @@ describe('admin operations HTTP integration', () => {
         userId: { notIn: [superA.id, superB.id] },
       },
     });
+    let remainingActor = superA;
     try {
       const [first, second] = await Promise.all([
         request(`/v1/admin/admins/${superB.id}/disable`, superA.cookie, {
@@ -438,6 +439,7 @@ describe('admin operations HTTP integration', () => {
       expect(statuses.some((status) => status === 409 || status === 400)).toBe(
         true,
       );
+      remainingActor = first.status === 200 ? superA : superB;
       const remaining = await prisma.userAdminRole.count({
         where: {
           role: { key: ADMIN_ROLES.superAdmin },
@@ -459,7 +461,7 @@ describe('admin operations HTTP integration', () => {
     await assignAdminRole(prisma, founder.id, ADMIN_ROLES.support);
     const disabled = await request(
       `/v1/admin/admins/${founder.id}/disable`,
-      superA.cookie,
+      remainingActor.cookie,
       {
         method: 'POST',
         body: '{}',
@@ -482,13 +484,13 @@ describe('admin operations HTTP integration', () => {
 
     const revokeAgain = await request(
       `/v1/admin/admins/${target.id}/sessions`,
-      superA.cookie,
+      remainingActor.cookie,
       { method: 'DELETE', body: '{}' },
     );
     expect(revokeAgain.status).toBe(200);
     const revokeIdempotent = await request(
       `/v1/admin/admins/${target.id}/sessions`,
-      superA.cookie,
+      remainingActor.cookie,
       { method: 'DELETE', body: '{}' },
     );
     expect(revokeIdempotent.status).toBe(200);

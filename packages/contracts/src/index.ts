@@ -1311,6 +1311,45 @@ export const SUPPORT_CASE_STATUSES = [
 
 export type SupportCaseStatus = (typeof SUPPORT_CASE_STATUSES)[number];
 
+export const PUBLIC_SUPPORT_CATEGORIES = [
+  'account',
+  'application',
+  'safety',
+  'privacy',
+  'technical',
+  'other',
+] as const;
+
+export type PublicSupportCategory = (typeof PUBLIC_SUPPORT_CATEGORIES)[number];
+
+export const PUBLIC_SUPPORT_LIMITS = {
+  emailMax: 254,
+  subjectMax: 160,
+  messageMax: 5000,
+  submissionsPerWindow: 5,
+  windowSeconds: 15 * 60,
+} as const;
+
+export const PUBLIC_SUPPORT_ERROR_CODES = {
+  invalidInput: 'PUBLIC_SUPPORT_INVALID_INPUT',
+  rateLimited: 'PUBLIC_SUPPORT_RATE_LIMITED',
+} as const;
+
+export type PublicSupportErrorCode =
+  (typeof PUBLIC_SUPPORT_ERROR_CODES)[keyof typeof PUBLIC_SUPPORT_ERROR_CODES];
+
+export type CreatePublicSupportCaseRequest = {
+  category: PublicSupportCategory;
+  email: string;
+  subject: string;
+  message: string;
+};
+
+export type CreatePublicSupportCaseResponse = {
+  caseId: string;
+  status: 'OPEN';
+};
+
 export type AdminSessionResponse = {
   user: { id: string; email: string };
   roles: AdminRoleKey[];

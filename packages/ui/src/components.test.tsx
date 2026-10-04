@@ -99,6 +99,28 @@ describe('foundation components', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
+  it('exposes real public marketing routes instead of placeholder anchors', () => {
+    render(
+      <MarketingShell>
+        <h1>Marketing shell</h1>
+      </MarketingShell>,
+    );
+    expect(
+      screen.getByRole('navigation', { name: 'Public navigation' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('link', { name: 'How it works' })[0],
+    ).toHaveAttribute('href', '/how-it-works');
+    expect(
+      screen.getAllByRole('link', { name: 'Join FounderChatters' })[0],
+    ).toHaveAttribute('href', '/signup');
+    expect(
+      screen.queryByRole('link', { name: 'About' }),
+    ).not.toBeInTheDocument();
+    expect(document.querySelector('a[href="#about"]')).toBeNull();
+    expect(document.querySelector('a[href="#stories"]')).toBeNull();
+  });
+
   it('uses the frozen five-destination member navigation contract', () => {
     render(
       <MemberShell>

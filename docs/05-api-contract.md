@@ -110,9 +110,38 @@ Admin:
 Public:
 - `POST /support/cases`
 
-Authenticated:
-- `GET /support/cases/me`
-- `GET /support/cases/:id`
+No public list, detail, guessed-ID lookup, or ticket-history browser.
+
+Body allowlist only: `category`, `email`, `subject`, `message`.
+Unknown properties are rejected.
+
+Public categories:
+`account` | `application` | `safety` | `privacy` | `technical` | `other`
+
+Validation:
+- `category` exact allowlist
+- `email` trimmed and lowercased, valid, max 254
+- `subject` trimmed, non-empty, max 160
+- `message` trimmed, non-empty, max 5000; stored as plain text
+
+Success: HTTP 201
+
+```json
+{ "caseId": "<id>", "status": "OPEN" }
+```
+
+The success body does not echo the message.
+
+Auth is optional. A valid session associates `userId` and uses the
+server-known account email. Guests store the validated submitted email.
+A valid session is not required to be `ACTIVE_MEMBER`.
+
+`SupportCase` and the first `SupportMessage` are created in one
+transaction. Guest first message uses `actorType=GUEST`. Signed-in first
+message uses `actorType=USER`.
+
+OriginGuard applies to this POST. Redis rate limit is 5 submissions per
+15 minutes per hashed abuse-control identity.
 
 Admin:
 - `GET /admin/support`

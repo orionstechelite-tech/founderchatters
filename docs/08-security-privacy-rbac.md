@@ -54,6 +54,27 @@ remains a controlled operational procedure outside HTTP.
 - evidence access audited
 - minimize copied message content
 
+## Public support
+`POST /v1/support/cases` is unauthenticated and OriginGuard-protected.
+
+Optional session association uses session inspect, not
+`requireActiveMember`. Suspended, unverified, applicant, and active
+accounts may file support. Deleted accounts fall back to guest. A stale
+or invalid cookie is treated as a guest. Signed-in identity email is
+server-known and cannot be overridden by the client body.
+
+Rate limit: 5 submissions / 15 minutes per hashed client identity
+(`support-rate:v1:create:<hash>`), plus a hashed normalized-email
+dimension (`support-rate:v1:email:<hash>`). Redis failure fails closed
+to HTTP 429. Raw IP addresses are not persisted.
+
+Support message bodies are not copied into logs, analytics, audit
+metadata, rate-limit keys, or API error output.
+
+Public safety support contacts the support team. It does not replace
+in-product report/block (FC-017) and does not expose private DMs or
+reporter identity.
+
 ## Audit
 Append-only logical audit entries for:
 - application decisions

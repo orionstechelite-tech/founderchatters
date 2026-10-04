@@ -19,6 +19,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
 import { RequestsModule } from './requests/requests.module.js';
 import { SafetyModule } from './safety/safety.module.js';
 import { SettingsModule } from './settings/settings.module.js';
+import { PublicSupportModule } from './support/public-support.module.js';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { SettingsModule } from './settings/settings.module.js';
     NotificationsModule,
     SettingsModule,
     SafetyModule,
+    PublicSupportModule,
   ],
   controllers: [AppController],
   providers: [
