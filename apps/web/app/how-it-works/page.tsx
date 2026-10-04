@@ -65,16 +65,19 @@ export default function HowItWorksPage() {
       />
       <div className="fc-mkt-grid fc-mkt-grid--3">
         <InfoCard
+          headingLevel={3}
           kicker="Context"
           title="Explain the real problem"
           body="Write enough background for another founder to understand the decision in front of you."
         />
         <InfoCard
+          headingLevel={3}
           kicker="Timing"
           title="Say when it matters"
           body="Urgency and timing help people decide whether they can be useful now."
         />
         <InfoCard
+          headingLevel={3}
           kicker="Who could help"
           title="Name the relevant experience"
           body="Ask for a founder or operator who has already navigated a nearby problem."
@@ -88,18 +91,21 @@ export default function HowItWorksPage() {
       />
       <div className="fc-mkt-grid fc-mkt-grid--3">
         <InfoCard
+          headingLevel={3}
           kicker="Public advice"
           title="Advice with context"
           body="Share useful context where it can benefit the requester and keep the request history intact."
           sand
         />
         <InfoCard
+          headingLevel={3}
           kicker="Introduction"
           title="Consent before connection"
           body="Offer a specific connection. Get permission before passing anyone’s contact details."
           sand
         />
         <InfoCard
+          headingLevel={3}
           kicker="Private chat"
           title="Private, request-linked"
           body="Continue 1:1 when context is sensitive. Messaging alone does not create reputation."
@@ -133,18 +139,21 @@ export default function HowItWorksPage() {
       />
       <div className="fc-mkt-grid fc-mkt-grid--3">
         <InfoCard
+          headingLevel={3}
           kicker="Report"
           title="Report real problems"
           body="Spam, fraud, impersonation, harassment, or policy violations can be reported in-product."
           sand
         />
         <InfoCard
+          headingLevel={3}
           kicker="Block"
           title="Control direct access"
           body="Blocking prevents direct interaction while preserving necessary historical context."
           sand
         />
         <InfoCard
+          headingLevel={3}
           kicker="Moderation"
           title="Reason + audit"
           body="Sensitive actions require reasons and are recorded. Admins do not browse private DMs."

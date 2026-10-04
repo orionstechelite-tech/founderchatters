@@ -11,10 +11,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ForgotPasswordForm } from './forgot-password/forgot-password-form';
 import { ResetPasswordForm } from './reset-password/[token]/reset-password-form';
-import { VerifyEmailClient } from './verify-email/verify-email-client';
+import {
+  hasVerifyEmailJobForTests,
+  resetVerifyEmailJobsForTests,
+  VerifyEmailClient,
+} from './verify-email/verify-email-client';
 
 afterEach(() => {
   cleanup();
+  resetVerifyEmailJobsForTests();
   vi.unstubAllGlobals();
   window.sessionStorage.clear();
   window.history.replaceState({}, '', '/');
@@ -100,6 +105,82 @@ describe('FC-006 auth recovery forms', () => {
     expect(screen.getByText(message)).toBeVisible();
     expect(window.location.href).not.toContain('sensitive-token');
     expect(window.sessionStorage.length).toBe(0);
+  });
+
+  it('keeps verification progress across a remount and applies the first result', async () => {
+    let resolveVerify: ((value: Response) => void) | undefined;
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveVerify = resolve;
+        }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const first = render(
+      createElement(VerifyEmailClient, { token: 'live-verify-token' }),
+    );
+    expect(
+      await screen.findByRole('heading', { name: 'Verifying your email' }),
+    ).toBeVisible();
+    first.unmount();
+
+    render(createElement(VerifyEmailClient, { token: 'live-verify-token' }));
+    expect(
+      screen.getByRole('heading', { name: 'Verifying your email' }),
+    ).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    resolveVerify?.(response({ verified: true }));
+    expect(
+      await screen.findByRole('heading', { name: 'Email verified' }),
+    ).toBeVisible();
+    expect(hasVerifyEmailJobForTests('live-verify-token')).toBe(false);
+  });
+
+  it('retries verification after a settled network error', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce(response({ verified: true }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const first = render(
+      createElement(VerifyEmailClient, { token: 'retry-verify-token' }),
+    );
+    expect(
+      await screen.findByRole('heading', { name: 'That link did not work' }),
+    ).toBeVisible();
+    expect(hasVerifyEmailJobForTests('retry-verify-token')).toBe(false);
+    first.unmount();
+
+    render(createElement(VerifyEmailClient, { token: 'retry-verify-token' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Email verified' }),
+    ).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(hasVerifyEmailJobForTests('retry-verify-token')).toBe(false);
+  });
+
+  it('does not retain a successful verification job for later remounts', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(response({ verified: true }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const first = render(
+      createElement(VerifyEmailClient, { token: 'settled-verify-token' }),
+    );
+    expect(
+      await screen.findByRole('heading', { name: 'Email verified' }),
+    ).toBeVisible();
+    expect(hasVerifyEmailJobForTests('settled-verify-token')).toBe(false);
+    first.unmount();
+
+    render(createElement(VerifyEmailClient, { token: 'settled-verify-token' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Email verified' }),
+    ).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(hasVerifyEmailJobForTests('settled-verify-token')).toBe(false);
   });
 
   it('renders the generic successful resend state', async () => {

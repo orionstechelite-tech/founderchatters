@@ -681,6 +681,11 @@ describe('FC-016 settings', () => {
     await user.keyboard('{Escape}');
     expect(dialog).not.toBeInTheDocument();
     expect(screen.queryByText('Delete your account?')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Delete account' }),
+      ).toHaveFocus();
+    });
   });
 
   it('cancels account deletion without calling the API', async () => {

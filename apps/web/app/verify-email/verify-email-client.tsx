@@ -3,11 +3,10 @@
 import type {
   AcceptedResponse,
   EmailRequest,
-  VerifyEmailRequest,
   VerifyEmailResponse,
 } from '@founderchatters/contracts';
 import { Button, Field } from '@founderchatters/ui';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { AuthApiError, postAuth } from '../auth/auth-api';
@@ -18,12 +17,65 @@ import {
 
 type VerifyState = 'idle' | 'verifying' | 'verified' | 'expired' | 'error';
 
+type VerifyOutcome = {
+  state: Exclude<VerifyState, 'idle' | 'verifying'>;
+  message: string;
+  clearToken: boolean;
+};
+
+const verifyJobs = new Map<string, Promise<VerifyOutcome>>();
+
+export function resetVerifyEmailJobsForTests(): void {
+  verifyJobs.clear();
+}
+
+export function hasVerifyEmailJobForTests(token: string): boolean {
+  return verifyJobs.has(token);
+}
+
+function verifyEmailOnce(token: string): Promise<VerifyOutcome> {
+  const existing = verifyJobs.get(token);
+  if (existing) return existing;
+  const job = postAuth<VerifyEmailResponse>('verify-email', {
+    token,
+  })
+    .then((): VerifyOutcome => ({
+      state: 'verified',
+      message: '',
+      clearToken: true,
+    }))
+    .catch((error: unknown): VerifyOutcome => {
+      if (
+        error instanceof AuthApiError &&
+        error.code === 'VERIFY_TOKEN_EXPIRED'
+      ) {
+        return { state: 'expired', message: '', clearToken: true };
+      }
+      return {
+        state: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'This verification link is not valid.',
+        clearToken: !(
+          error instanceof AuthApiError && error.code === 'NETWORK_ERROR'
+        ),
+      };
+    });
+  verifyJobs.set(token, job);
+  void job.finally(() => {
+    if (verifyJobs.get(token) === job) {
+      verifyJobs.delete(token);
+    }
+  });
+  return job;
+}
+
 export function VerifyEmailClient({
   token,
 }: {
   readonly token?: string | undefined;
 }) {
-  const started = useRef(false);
   const [state, setState] = useState<VerifyState>(token ? 'verifying' : 'idle');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -32,43 +84,16 @@ export function VerifyEmailClient({
   const [sent, setSent] = useState(false);
 
   useEffect(() => {
-    if (started.current) return;
     const activeToken = captureVerificationToken(token);
     if (!activeToken) return;
-    started.current = true;
-    const request: VerifyEmailRequest = { token: activeToken };
     let cancelled = false;
-    void Promise.resolve().then(async () => {
+    void verifyEmailOnce(activeToken).then((outcome) => {
       if (cancelled) return;
-      setState('verifying');
-      try {
-        await postAuth<VerifyEmailResponse>('verify-email', request);
-        if (cancelled) return;
+      if (outcome.clearToken) {
         clearVerificationToken();
-        setState('verified');
-      } catch (error: unknown) {
-        if (cancelled) return;
-        if (
-          error instanceof AuthApiError &&
-          error.code === 'VERIFY_TOKEN_EXPIRED'
-        ) {
-          clearVerificationToken();
-          setState('expired');
-        } else {
-          if (
-            !(error instanceof AuthApiError) ||
-            error.code !== 'NETWORK_ERROR'
-          ) {
-            clearVerificationToken();
-          }
-          setMessage(
-            error instanceof Error
-              ? error.message
-              : 'This verification link is not valid.',
-          );
-          setState('error');
-        }
       }
+      setMessage(outcome.message);
+      setState(outcome.state);
     });
     return () => {
       cancelled = true;

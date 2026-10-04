@@ -323,7 +323,7 @@
       "id": "FC-021",
       "title": "End-to-end QA",
       "phase": "qa",
-      "status": "pending",
+      "status": "completed",
       "authorization": "AUTO_LOCAL",
       "depends_on": [
         "FC-018",

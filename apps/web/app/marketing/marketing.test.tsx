@@ -42,6 +42,18 @@ describe('public marketing pages', () => {
     expect(document.body.textContent).not.toMatch(
       /10,000 founders|30 countries|hundreds of introductions/i,
     );
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Every founder has needs. Every founder has experience.',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        level: 3,
+        name: 'What are you trying to solve?',
+      }),
+    ).toBeInTheDocument();
     expect(screen.getByText('Illustrative request')).toBeInTheDocument();
     expect(
       screen.getByText(/not a real FounderChatters request/i),
@@ -118,6 +130,12 @@ describe('public marketing pages', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: 'Contact support' }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Account' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { level: 3, name: 'Account' }),
+    ).not.toBeInTheDocument();
     for (const category of [
       'account',
       'application',

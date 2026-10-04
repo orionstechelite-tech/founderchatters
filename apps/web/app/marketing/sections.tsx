@@ -32,18 +32,21 @@ export function InfoCard({
   title,
   body,
   sand = false,
+  headingLevel = 2,
   children,
 }: {
   kicker: string;
   title: string;
   body?: string;
   sand?: boolean;
+  headingLevel?: 2 | 3;
   children?: ReactNode;
 }) {
+  const Heading = headingLevel === 3 ? 'h3' : 'h2';
   return (
     <article className={sand ? 'fc-mkt-card fc-mkt-card--sand' : 'fc-mkt-card'}>
       <p className="fc-label fc-mkt-kicker">{kicker}</p>
-      <h3 className="fc-title">{title}</h3>
+      <Heading className="fc-title">{title}</Heading>
       {body ? <p className="fc-body fc-mkt-note">{body}</p> : null}
       {children}
     </article>

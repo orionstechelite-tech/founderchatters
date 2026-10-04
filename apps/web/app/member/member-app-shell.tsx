@@ -19,6 +19,33 @@ export function memberNavItems(userId: string) {
   ];
 }
 
+type SessionOutcome =
+  { ok: true; session: AuthSessionResponse } | { ok: false; error: unknown };
+
+let sessionJob: Promise<SessionOutcome> | null = null;
+
+export function resetMemberSessionJobForTests(): void {
+  sessionJob = null;
+}
+
+export function hasMemberSessionJobForTests(): boolean {
+  return sessionJob !== null;
+}
+
+function loadMemberSession(): Promise<SessionOutcome> {
+  if (sessionJob) return sessionJob;
+  const job = authSessionRequest()
+    .then((session) => ({ ok: true as const, session }))
+    .catch((error: unknown) => ({ ok: false as const, error }))
+    .finally(() => {
+      if (sessionJob === job) {
+        sessionJob = null;
+      }
+    });
+  sessionJob = job;
+  return job;
+}
+
 function resolveActiveItem(
   pathname: string,
   userId: string,
@@ -54,33 +81,10 @@ export function MemberAppShell({
 
   useEffect(() => {
     let cancelled = false;
-    void authSessionRequest()
-      .then((next: AuthSessionResponse) => {
-        if (cancelled) return;
-        if (next.access.state !== 'ACTIVE') {
-          if (next.access.state === 'VERIFY_EMAIL') {
-            router.replace('/verify-email');
-            return;
-          }
-          if (next.access.state === 'APPLICATION') {
-            router.replace('/application');
-            return;
-          }
-          if (next.access.state === 'ONBOARDING') {
-            router.replace('/onboarding');
-            return;
-          }
-          if (next.access.state === 'SUSPENDED') {
-            router.replace('/suspended');
-            return;
-          }
-          router.replace('/signin');
-          return;
-        }
-        setSession(next);
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return;
+    void loadMemberSession().then((outcome) => {
+      if (cancelled) return;
+      if (!outcome.ok) {
+        const error = outcome.error;
         if (
           error instanceof OnboardingApiError &&
           error.code === 'AUTH_ACCOUNT_SUSPENDED'
@@ -88,15 +92,32 @@ export function MemberAppShell({
           router.replace('/suspended');
           return;
         }
-        if (
-          error instanceof OnboardingApiError &&
-          error.code === 'AUTH_SESSION_EXPIRED'
-        ) {
-          router.replace('/signin');
+        router.replace('/signin');
+        return;
+      }
+      const next = outcome.session;
+      if (next.access.state !== 'ACTIVE') {
+        if (next.access.state === 'VERIFY_EMAIL') {
+          router.replace('/verify-email');
+          return;
+        }
+        if (next.access.state === 'APPLICATION') {
+          router.replace('/application');
+          return;
+        }
+        if (next.access.state === 'ONBOARDING') {
+          router.replace('/onboarding');
+          return;
+        }
+        if (next.access.state === 'SUSPENDED') {
+          router.replace('/suspended');
           return;
         }
         router.replace('/signin');
-      });
+        return;
+      }
+      setSession(next);
+    });
     return () => {
       cancelled = true;
     };
