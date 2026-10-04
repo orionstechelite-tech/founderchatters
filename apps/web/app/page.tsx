@@ -100,14 +100,23 @@ export default function HomePage() {
         body="The network becomes useful when both sides are visible without turning founders into creators, influencers, or lead lists."
       />
       <div className="fc-mkt-grid fc-mkt-grid--2">
-        <InfoCard kicker="I need" title="What are you trying to solve?" sand>
+        <InfoCard
+          headingLevel={3}
+          kicker="I need"
+          title="What are you trying to solve?"
+          sand
+        >
           <ul className="fc-mkt-list fc-body">
             {needs.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
         </InfoCard>
-        <InfoCard kicker="I can help" title="What have you already solved?">
+        <InfoCard
+          headingLevel={3}
+          kicker="I can help"
+          title="What have you already solved?"
+        >
           <ul className="fc-mkt-list fc-body">
             {help.map((item) => (
               <li key={item}>{item}</li>
@@ -123,7 +132,13 @@ export default function HomePage() {
       />
       <div className="fc-mkt-grid fc-mkt-grid--3">
         {loop.map(([number, title, body]) => (
-          <InfoCard key={title} kicker={number} title={title} body={body} />
+          <InfoCard
+            key={title}
+            headingLevel={3}
+            kicker={number}
+            title={title}
+            body={body}
+          />
         ))}
       </div>
 
@@ -134,18 +149,21 @@ export default function HomePage() {
       />
       <div className="fc-mkt-grid fc-mkt-grid--3">
         <InfoCard
+          headingLevel={3}
           kicker="Founder-first"
           title="Short founder application"
           body="New members provide enough company and founder context to keep discovery useful."
           sand
         />
         <InfoCard
+          headingLevel={3}
           kicker="Introductions"
           title="Permission before access"
           body="Introductions are offered with context and require consent before details are passed."
           sand
         />
         <InfoCard
+          headingLevel={3}
           kicker="Privacy"
           title="Private means private"
           body="Private messages are not an admin browsing surface. Safety review is scoped to relevant reported context."

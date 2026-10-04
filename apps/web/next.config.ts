@@ -2,7 +2,9 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   agentRules: false,
-  output: 'standalone',
+  ...(process.env.E2E_WEB_BUILD === '1'
+    ? {}
+    : { output: 'standalone' as const }),
   poweredByHeader: false,
   transpilePackages: ['@founderchatters/ui'],
   async headers() {

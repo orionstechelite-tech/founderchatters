@@ -13,8 +13,9 @@ vi.mock('next/navigation', () => ({
   useRouter: () => navigation,
 }));
 
-import { OnboardingClient } from './onboarding-client';
 import { HomeGate } from '../home/home-gate';
+import { resetMemberSessionJobForTests } from '../member/member-app-shell';
+import { OnboardingClient } from './onboarding-client';
 
 const topics = {
   expertise: [
@@ -77,6 +78,7 @@ const readyProfile = {
 
 afterEach(() => {
   cleanup();
+  resetMemberSessionJobForTests();
   vi.unstubAllGlobals();
   navigation.replace.mockReset();
 });
@@ -374,6 +376,16 @@ describe('FC-009 onboarding', { timeout: 30_000 }, () => {
     await waitFor(() =>
       expect(navigation.replace).toHaveBeenCalledWith('/verify-email'),
     );
+  });
+
+  it('renders truthful home copy for an active member', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(activeSession)));
+    render(createElement(HomeGate));
+    expect(
+      await screen.findByRole('heading', { name: 'You’re in the network.' }),
+    ).toBeVisible();
+    expect(screen.getByText(/request-linked conversations/i)).toBeVisible();
+    expect(screen.queryByText(/later task/i)).not.toBeInTheDocument();
   });
 
   it('sends unauthenticated /home visitors to sign in', async () => {

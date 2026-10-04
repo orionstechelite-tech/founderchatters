@@ -10,8 +10,8 @@ export function HomeGate() {
           <p className="fc-label">Home</p>
           <h1>You’re in the network.</h1>
           <p>
-            Discover founders you can actually learn from. Ask is live; messages
-            will arrive in a later task.
+            Discover founders you can actually learn from. Ask for help,
+            continue request-linked conversations, and contribute where you can.
           </p>
         </div>
       </section>

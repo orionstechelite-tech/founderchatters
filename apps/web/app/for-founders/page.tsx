@@ -94,6 +94,7 @@ export default function ForFoundersPage() {
       <div className="fc-mkt-grid fc-mkt-grid--3">
         {clusters.map((item) => (
           <InfoCard
+            headingLevel={3}
             key={item.kicker}
             kicker={item.kicker}
             title={item.title}
@@ -149,18 +150,21 @@ export default function ForFoundersPage() {
       />
       <div className="fc-mkt-grid fc-mkt-grid--3">
         <InfoCard
+          headingLevel={3}
           kicker="Application"
           title="Short founder context"
           body="Enough context to understand who is building what and why they belong in the network."
           sand
         />
         <InfoCard
+          headingLevel={3}
           kicker="Consent"
           title="Introductions stay human"
           body="No forwarding people’s details without permission and context."
           sand
         />
         <InfoCard
+          headingLevel={3}
           kicker="Contribution"
           title="Reputation follows help"
           body="Visible contribution is tied to explicit confirmation from founders you helped."

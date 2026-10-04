@@ -3,7 +3,7 @@
 import type { MemberAccountSettingsResponse } from '@founderchatters/contracts';
 import { Button } from '@founderchatters/ui';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { getAccountSettings } from '../../member/member-api';
 import { OnboardingApiError } from '../../onboarding/onboarding-api';
@@ -16,6 +16,7 @@ export function AccountSettingsClient() {
   );
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const deleteWasOpen = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +40,13 @@ export function AccountSettingsClient() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (deleteWasOpen.current && !deleteOpen) {
+      document.getElementById('delete-account-trigger')?.focus();
+    }
+    deleteWasOpen.current = deleteOpen;
+  }, [deleteOpen]);
 
   return (
     <>
@@ -92,6 +100,7 @@ export function AccountSettingsClient() {
           legal retention period.
         </p>
         <Button
+          id="delete-account-trigger"
           onClick={() => setDeleteOpen(true)}
           type="button"
           variant="secondary"

@@ -773,6 +773,11 @@ textarea.fc-field__control {
 .fc-mkt-cta .fc-mkt-kicker {
   color: var(--fc-color-accent);
 }
+.fc-mkt-hero__aside .fc-mkt-note,
+.fc-mkt-panel .fc-mkt-note,
+.fc-mkt-cta .fc-mkt-note {
+  color: var(--fc-color-text-inverse);
+}
 .fc-mkt-grid {
   display: grid;
   gap: var(--fc-space-5);
