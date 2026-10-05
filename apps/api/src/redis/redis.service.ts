@@ -21,6 +21,14 @@ export class RedisService implements OnModuleDestroy {
     });
   }
 
+  async checkConnectivity(): Promise<void> {
+    await this.connect();
+    const result = await this.client.ping();
+    if (result !== 'PONG') {
+      throw new Error('Redis ping failed');
+    }
+  }
+
   async incrementFixedWindow(
     key: string,
     windowSeconds: number,

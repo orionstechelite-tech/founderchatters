@@ -18,3 +18,8 @@ scripts
 tasks
 .env.example
 docker-compose.dev.yml
+deploy/staging/Caddyfile
+deploy/staging/.env.staging.example
+deploy/staging/.env.staging.validation
+deploy/staging/backup.sh
+deploy/docker

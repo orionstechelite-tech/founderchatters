@@ -3,7 +3,7 @@ import {
   type MiddlewareConsumer,
   type NestModule,
 } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 
 import { AdminOpsModule } from './admin/admin-ops.module.js';
 import { AdminApplicationModule } from './admin/application-review.module.js';
@@ -12,6 +12,8 @@ import { ApplicationModule } from './application/application.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ApiExceptionFilter } from './http/api-exception.filter.js';
 import { FoundersModule } from './founders/founders.module.js';
+import { HealthModule } from './health/health.module.js';
+import { RequestLoggingInterceptor } from './observability/request-logging.interceptor.js';
 import { OnboardingModule } from './onboarding/onboarding.module.js';
 import { RequestIdMiddleware } from './http/request-id.middleware.js';
 import { ConversationsModule } from './conversations/conversations.module.js';
@@ -24,6 +26,7 @@ import { PublicSupportModule } from './support/public-support.module.js';
 @Module({
   imports: [
     AuthModule,
+    HealthModule,
     ApplicationModule,
     AdminApplicationModule,
     AdminOpsModule,
@@ -41,6 +44,10 @@ import { PublicSupportModule } from './support/public-support.module.js';
     {
       provide: APP_FILTER,
       useClass: ApiExceptionFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestLoggingInterceptor,
     },
   ],
 })

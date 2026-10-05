@@ -32,6 +32,7 @@ import type { RedisService } from '../src/redis/redis.service.js';
 const config = (production = false) =>
   ({
     isProduction: production,
+    secureCookies: production,
     sessionSecret: 'test-session-secret',
     passwordPepper: 'test-password-pepper',
     allowedOrigins: new Set(['http://localhost:3000']),
@@ -89,7 +90,10 @@ const requiredEnvironment = {
   WEB_URL: 'http://localhost:3000',
 } as const;
 const productionEnvironment = {
-  ...requiredEnvironment,
+  DATABASE_URL:
+    'postgresql://prod_user:prod_pass@postgres.internal:5432/founderchatters_prod',
+  REDIS_URL: 'redis://redis.internal:6379',
+  ALLOWED_ORIGINS: 'https://app.founderchatters.com',
   WEB_URL: 'https://app.founderchatters.com',
 } as const;
 
@@ -115,6 +119,7 @@ describe('AppConfig security environment', () => {
       {} as PrismaService,
       {
         isProduction: true,
+        secureCookies: true,
       } as AppConfig,
     );
     expect(sessions.cookieOptions(new Date()).secure).toBe(true);

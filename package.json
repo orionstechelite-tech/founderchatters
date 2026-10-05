@@ -36,7 +36,15 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "validate": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+    "validate": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
+    "staging:preflight": "node scripts/staging-preflight.mjs",
+    "staging:config": "docker compose --env-file deploy/staging/.env.staging.validation -f deploy/staging/docker-compose.yml config --quiet",
+    "staging:caddy:validate": "node scripts/staging-caddy-validate.mjs",
+    "staging:smoke": "node scripts/staging-smoke.mjs",
+    "staging:backup": "node scripts/staging-backup.mjs",
+    "staging:migrations:status": "node scripts/staging-migrations-status.mjs",
+    "staging:migrations:deploy": "node scripts/staging-migrations-deploy.mjs",
+    "staging:rbac:sync": "node scripts/staging-rbac-sync.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

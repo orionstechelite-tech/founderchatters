@@ -148,7 +148,7 @@ export class SessionService {
   cookieOptions(expiresAt: Date): CookieOptions {
     return {
       httpOnly: true,
-      secure: this.config.isProduction,
+      secure: this.config.secureCookies,
       sameSite: 'lax',
       path: '/',
       maxAge: SESSION_LIFETIME_MS,
@@ -159,7 +159,7 @@ export class SessionService {
   clearCookieOptions(): CookieOptions {
     return {
       httpOnly: true,
-      secure: this.config.isProduction,
+      secure: this.config.secureCookies,
       sameSite: 'lax',
       path: '/',
       maxAge: 0,

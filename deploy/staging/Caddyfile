@@ -1,0 +1,42 @@
+# Staging TLS reverse proxy.
+# Caddy is used because ACME HTTPS and host-based routing stay in one file
+# without a separate certbot/nginx ceremony. Domain names come from env only.
+#
+# TRUST_PROXY_ADDRESSES must list only the proxy container address
+# (compose default: 172.30.0.10). Do not trust arbitrary X-Forwarded-* hops.
+
+{
+	email {$STAGING_ACME_EMAIL}
+}
+
+{$STAGING_WEB_HOST} {
+	encode gzip
+	reverse_proxy web:3000 {
+		header_up Host {host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {remote_ip}
+		header_up X-Real-IP {remote_ip}
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+{$STAGING_API_HOST} {
+	encode gzip
+	reverse_proxy api:4000 {
+		header_up Host {host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {remote_ip}
+		header_up X-Real-IP {remote_ip}
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
