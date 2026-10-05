@@ -6,6 +6,7 @@
   "scripts": {
     "prebuild": "npm --prefix ../.. run db:generate && npm --prefix ../.. run build --workspace @founderchatters/contracts",
     "build": "tsc -p tsconfig.build.json",
+    "postbuild": "node ../../scripts/copy-api-prisma-client.mjs",
     "predev": "npm --prefix ../.. run db:generate && npm --prefix ../.. run build --workspace @founderchatters/contracts",
     "dev": "tsx watch src/main.ts",
     "dev:worker": "tsx watch src/worker.ts",

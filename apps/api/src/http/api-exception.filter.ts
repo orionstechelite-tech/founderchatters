@@ -38,6 +38,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
       },
     };
 
+    response.locals.safeErrorCode = body.error.code;
     response.status(status).json(body);
   }
 }

@@ -38,15 +38,113 @@ function required(name: string, fallback?: string): string {
   return value;
 }
 
-function trustedProxyAddresses(
+export function isDeployedRuntimeEnvironment(
+  runtimeEnvironment: RuntimeEnvironment,
+): boolean {
+  return (
+    runtimeEnvironment === 'staging' || runtimeEnvironment === 'production'
+  );
+}
+
+export function usesSecureCookies(
+  runtimeEnvironment: RuntimeEnvironment,
+): boolean {
+  return isDeployedRuntimeEnvironment(runtimeEnvironment);
+}
+
+function isLoopbackHost(hostname: string): boolean {
+  const host = hostname.trim().toLowerCase();
+  return (
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === '::1' ||
+    host === '0.0.0.0' ||
+    host === '[::1]'
+  );
+}
+
+function isWeakSecret(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  if (normalized.length < 32) {
+    return true;
+  }
+  return (
+    normalized === 'replace-me' ||
+    normalized === 'changeme' ||
+    normalized === 'change-me' ||
+    normalized === 'your-secret-here' ||
+    normalized === 'password' ||
+    normalized === 'secret' ||
+    normalized === 'founderchatters' ||
+    normalized.startsWith('local-') ||
+    normalized.includes('replace-me') ||
+    normalized.includes('change-me')
+  );
+}
+
+function isOverlyBroadTrustedProxy(value: string): boolean {
+  const [address, prefix] = value.split('/');
+  return (
+    address === '*' ||
+    address === '0.0.0.0' ||
+    address === '::' ||
+    prefix === '0'
+  );
+}
+
+function assertNonLocalPublicOrigin(
+  name: string,
+  value: string,
+  runtimeEnvironment: RuntimeEnvironment,
+): void {
+  if (!isDeployedRuntimeEnvironment(runtimeEnvironment)) {
+    return;
+  }
+  const url = new URL(value);
+  if (isLoopbackHost(url.hostname)) {
+    throw new Error(
+      `${name} must not use a localhost address in staging and production`,
+    );
+  }
+}
+
+function deployedServiceUrl(
+  name: string,
+  value: string,
+  runtimeEnvironment: RuntimeEnvironment,
+): string {
+  if (!isDeployedRuntimeEnvironment(runtimeEnvironment)) {
+    return value;
+  }
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(`${name} must be a valid URL`);
+  }
+  if (isLoopbackHost(url.hostname)) {
+    throw new Error(
+      `${name} must not use a localhost address in staging and production`,
+    );
+  }
+  if (
+    name === 'DATABASE_URL' &&
+    decodeURIComponent(url.username) === 'founderchatters' &&
+    decodeURIComponent(url.password) === 'founderchatters'
+  ) {
+    throw new Error(
+      'DATABASE_URL must not reuse development credentials in staging and production',
+    );
+  }
+  return value;
+}
+
+export function evaluateTrustedProxyAddresses(
   value: string | undefined,
   runtimeEnvironment: RuntimeEnvironment,
 ): false | string[] {
   if (!value?.trim()) {
-    if (
-      runtimeEnvironment === 'production' ||
-      runtimeEnvironment === 'staging'
-    ) {
+    if (isDeployedRuntimeEnvironment(runtimeEnvironment)) {
       throw new Error(
         'TRUST_PROXY_ADDRESSES is required in staging and production; use "none" when no reverse proxy is present',
       );
@@ -61,6 +159,11 @@ function trustedProxyAddresses(
   if (addresses.some((address) => !isValidIpOrCidr(address))) {
     throw new Error(
       'TRUST_PROXY_ADDRESSES must contain only comma-separated IP addresses or CIDRs',
+    );
+  }
+  if (addresses.some((address) => isOverlyBroadTrustedProxy(address))) {
+    throw new Error(
+      'TRUST_PROXY_ADDRESSES must not trust every address; list the reverse-proxy hop only',
     );
   }
   return addresses;
@@ -89,15 +192,47 @@ function secret(
 ): string {
   const value = required(
     name,
-    environment === 'production' ? undefined : fallback,
+    isDeployedRuntimeEnvironment(environment) ? undefined : fallback,
   );
-  if (
-    environment === 'production' &&
-    (value.length < 32 || value === 'replace-me')
-  ) {
-    throw new Error(`${name} must be a strong production secret`);
+  if (isDeployedRuntimeEnvironment(environment) && isWeakSecret(value)) {
+    throw new Error(`${name} must be a strong ${environment} secret`);
   }
   return value;
+}
+
+export function resolveLogLevel(
+  runtimeEnvironment: RuntimeEnvironment,
+  rawValue = process.env.LOG_LEVEL,
+): string {
+  const raw = rawValue?.trim().toLowerCase();
+  if (!raw) {
+    return runtimeEnvironment === 'development' ? 'debug' : 'log';
+  }
+  const mapped = raw === 'info' ? 'log' : raw;
+  if (!['error', 'warn', 'log', 'debug', 'verbose'].includes(mapped)) {
+    throw new Error(
+      'LOG_LEVEL must be one of: error, warn, log, info, debug, verbose',
+    );
+  }
+  return mapped;
+}
+
+export type NestLogLevel =
+  'verbose' | 'debug' | 'log' | 'warn' | 'error' | 'fatal';
+
+export function nestLoggerLevels(logLevel: string): NestLogLevel[] {
+  switch (logLevel) {
+    case 'verbose':
+      return ['verbose', 'debug', 'log', 'warn', 'error', 'fatal'];
+    case 'debug':
+      return ['debug', 'log', 'warn', 'error', 'fatal'];
+    case 'warn':
+      return ['warn', 'error', 'fatal'];
+    case 'error':
+      return ['error', 'fatal'];
+    default:
+      return ['log', 'warn', 'error', 'fatal'];
+  }
 }
 
 function applicationOrigin(
@@ -125,23 +260,81 @@ function applicationOrigin(
     throw new Error('WEB_URL must use HTTP or HTTPS');
   }
   if (
-    (runtimeEnvironment === 'staging' || runtimeEnvironment === 'production') &&
+    isDeployedRuntimeEnvironment(runtimeEnvironment) &&
     url.protocol !== 'https:'
   ) {
     throw new Error('WEB_URL must use HTTPS in staging and production');
   }
+  assertNonLocalPublicOrigin('WEB_URL', url.origin, runtimeEnvironment);
   return url.origin;
+}
+
+function allowedOrigins(
+  runtimeEnvironment: RuntimeEnvironment,
+  webUrl: string,
+): Set<string> {
+  const value = required(
+    'ALLOWED_ORIGINS',
+    isDeployedRuntimeEnvironment(runtimeEnvironment)
+      ? undefined
+      : 'http://localhost:3000',
+  );
+  const origins = value
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  if (origins.length === 0) {
+    throw new Error('ALLOWED_ORIGINS is required');
+  }
+  for (const origin of origins) {
+    let url: URL;
+    try {
+      url = new URL(origin);
+    } catch {
+      throw new Error(
+        'ALLOWED_ORIGINS must contain valid absolute URL origins',
+      );
+    }
+    if (
+      isDeployedRuntimeEnvironment(runtimeEnvironment) &&
+      url.protocol !== 'https:'
+    ) {
+      throw new Error(
+        'ALLOWED_ORIGINS must use HTTPS in staging and production',
+      );
+    }
+    assertNonLocalPublicOrigin(
+      'ALLOWED_ORIGINS',
+      url.origin,
+      runtimeEnvironment,
+    );
+  }
+  if (
+    isDeployedRuntimeEnvironment(runtimeEnvironment) &&
+    !origins.includes(webUrl)
+  ) {
+    throw new Error('ALLOWED_ORIGINS must include WEB_URL');
+  }
+  return new Set(origins);
 }
 
 @Injectable()
 export class AppConfig {
   readonly environment = environment();
-  readonly databaseUrl = required('DATABASE_URL');
-  readonly redisUrl = required('REDIS_URL');
+  readonly databaseUrl = deployedServiceUrl(
+    'DATABASE_URL',
+    required('DATABASE_URL'),
+    this.environment,
+  );
+  readonly redisUrl = deployedServiceUrl(
+    'REDIS_URL',
+    required('REDIS_URL'),
+    this.environment,
+  );
   readonly webUrl = applicationOrigin(
     required(
       'WEB_URL',
-      this.environment === 'production' || this.environment === 'staging'
+      isDeployedRuntimeEnvironment(this.environment)
         ? undefined
         : 'http://localhost:3000',
     ),
@@ -164,23 +357,24 @@ export class AppConfig {
     this.environment,
     'local-auth-token-secret',
   );
-  readonly allowedOrigins = new Set(
-    required(
-      'ALLOWED_ORIGINS',
-      this.environment === 'production' ? undefined : 'http://localhost:3000',
-    )
-      .split(',')
-      .map((origin) => origin.trim())
-      .filter(Boolean),
-  );
-  readonly trustedProxyAddresses = trustedProxyAddresses(
+  readonly allowedOrigins = allowedOrigins(this.environment, this.webUrl);
+  readonly trustedProxyAddresses = evaluateTrustedProxyAddresses(
     process.env.TRUST_PROXY_ADDRESSES,
     this.environment,
   );
+  readonly logLevel = resolveLogLevel(this.environment);
   readonly emailProvider = this.resolveEmailProvider();
 
   get isProduction(): boolean {
     return this.environment === 'production';
+  }
+
+  get isDeployedEnvironment(): boolean {
+    return isDeployedRuntimeEnvironment(this.environment);
+  }
+
+  get secureCookies(): boolean {
+    return usesSecureCookies(this.environment);
   }
 
   private resolveEmailProvider(): 'memory' {

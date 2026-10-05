@@ -1,0 +1,210 @@
+name: founderchatters-staging
+
+# edge: proxy, web, api. data: api, worker, postgres, redis, ops.
+# Runtime compose references immutable images only. It must not build
+# application or ops images from the current checkout.
+# Neither postgres nor redis is published. Networks are not marked internal
+# so Caddy ACME and a later approved email provider can use outbound access.
+networks:
+  edge:
+    name: fc_staging_edge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+  data:
+    name: fc_staging_data
+    ipam:
+      config:
+        - subnet: 172.30.1.0/24
+
+volumes:
+  fc_staging_postgres:
+  fc_staging_redis:
+  fc_staging_caddy_data:
+  fc_staging_caddy_config:
+
+services:
+  proxy:
+    image: caddy:2-alpine
+    container_name: fc-staging-proxy
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      STAGING_WEB_HOST: ${STAGING_WEB_HOST}
+      STAGING_API_HOST: ${STAGING_API_HOST}
+      STAGING_ACME_EMAIL: ${STAGING_ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - fc_staging_caddy_data:/data
+      - fc_staging_caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    networks:
+      edge:
+        ipv4_address: 172.30.0.10
+
+  web:
+    image: ${STAGING_WEB_IMAGE}
+    container_name: fc-staging-web
+    restart: unless-stopped
+    environment:
+      # Next production runtime. Do not pass NODE_ENV=staging into web.
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: '3000'
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    expose:
+      - '3000'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/').then((response)=>process.exit(response.status===200?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - edge
+
+  api:
+    image: ${STAGING_API_IMAGE}
+    container_name: fc-staging-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: '4000'
+      WEB_URL: ${WEB_URL}
+      API_URL: ${API_URL}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      TRUST_PROXY_ADDRESSES: ${TRUST_PROXY_ADDRESSES}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME}
+      SESSION_SECRET: ${SESSION_SECRET}
+      AUTH_TOKEN_SECRET: ${AUTH_TOKEN_SECRET}
+      PASSWORD_PEPPER: ${PASSWORD_PEPPER}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER}
+      EMAIL_FROM: ${EMAIL_FROM}
+      EMAIL_API_KEY: ${EMAIL_API_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-log}
+    expose:
+      - '4000'
+    # Compose gating uses readiness so the proxy/web wait for dependencies.
+    # Image HEALTHCHECK remains /health/live. Unhealthy does not restart the
+    # process; restart: unless-stopped applies only to container exit.
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:'+(process.env.PORT||4000)+'/v1/health/ready').then((response)=>process.exit(response.status===200?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - edge
+      - data
+
+  worker:
+    image: ${STAGING_API_IMAGE}
+    container_name: fc-staging-worker
+    restart: unless-stopped
+    working_dir: /app/apps/api
+    command: ['node', 'dist/apps/api/src/worker.js']
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      WEB_URL: ${WEB_URL}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      TRUST_PROXY_ADDRESSES: ${TRUST_PROXY_ADDRESSES}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME}
+      SESSION_SECRET: ${SESSION_SECRET}
+      AUTH_TOKEN_SECRET: ${AUTH_TOKEN_SECRET}
+      PASSWORD_PEPPER: ${PASSWORD_PEPPER}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER}
+      EMAIL_FROM: ${EMAIL_FROM}
+      EMAIL_API_KEY: ${EMAIL_API_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-log}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'kill -0 1']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - data
+
+  postgres:
+    image: postgres:16
+    container_name: fc-staging-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - fc_staging_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - data
+
+  redis:
+    image: redis:7
+    container_name: fc-staging-redis
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - fc_staging_redis:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - data
+
+  ops:
+    profiles: ['ops']
+    image: ${STAGING_OPS_IMAGE}
+    container_name: fc-staging-ops
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      DATABASE_URL: ${DATABASE_URL}
+      ADMIN_RBAC_SYNC_CONFIRM: ${ADMIN_RBAC_SYNC_CONFIRM:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - data
